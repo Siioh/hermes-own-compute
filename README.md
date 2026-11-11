@@ -2,7 +2,11 @@
 
 **Bring your own compute.**
 
-Own Compute is a Hermes Agent plugin for researchers and scientists who have a workstation, a lab server or a cluster account and want Hermes to use it. Hermes can start sandboxed container environments and submit Slurm batch jobs there, from chat or from a Compute page in Hermes Desktop that shows every machine and what runs on it. The machines can be SSH hosts, Slurm login nodes, the Docker or Podman on this computer, and EC2 machines that the plugin starts in an AWS account the user owns. Hermes can also give a task to a cloud agent: a Hermes agent that works in a sandbox on one of those machines and hands its work back as a git branch. Cloud agents here run on the user's own machines, not in Hermes Cloud or any hosted service. Every action that starts, changes or deletes something shows an approval card first. Everything runs on machines the user owns or has an account on. The plugin bills nothing and talks to no service run by its author. An EC2 host costs money: AWS bills the user's account (see [EC2 host](#ec2-host)). It is an independent plugin and is not a Nous Research product.
+Own Compute lets a Hermes agent start compute on demand, on machines the user owns. Ask in chat for a sandbox, a Slurm batch job, an EC2 machine or an agent run, and Hermes starts it after an approval card. A Compute page in Hermes Desktop shows every machine and what runs on it.
+
+It works with SSH hosts, Slurm login nodes, the Docker or Podman on this computer, and EC2 machines that the plugin starts in an AWS account the user owns. It is for researchers and scientists with a workstation, a lab server or a cluster account, and for developers whose work spans several machines.
+
+Hermes can also give a task to a cloud agent: a Hermes agent that works in a sandbox on one of those machines and hands its work back as a git branch. Cloud agents here run on the user's own machines, not in Hermes Cloud or any hosted service. Every action that starts, changes or deletes something shows an approval card first. Everything runs on machines the user owns or has an account on. The plugin bills nothing and talks to no service run by its author. An EC2 host costs money: AWS bills the user's account (see [EC2 host](#ec2-host)). It is an independent plugin and is not a Nous Research product.
 
 The internal plugin id is `cloud-compute`. It appears in the settings path `plugins.entries.cloud-compute`, the data folder `plugin-data/cloud-compute`, labels on remote machines and image names. It is not a second product.
 
