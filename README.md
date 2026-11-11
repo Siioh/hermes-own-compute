@@ -8,9 +8,51 @@ It works with SSH hosts, Slurm login nodes, the Docker or Podman on this compute
 
 Hermes can also give a task to a cloud agent: a Hermes agent that works in a sandbox on one of those machines and hands its work back as a git branch. Cloud agents here run on the user's own machines, not in Hermes Cloud or any hosted service. Every action that starts, changes or deletes something shows an approval card first. Everything runs on machines the user owns or has an account on. The plugin bills nothing and talks to no service run by its author. An EC2 host costs money: AWS bills the user's account (see [EC2 host](#ec2-host)). It is an independent plugin and is not a Nous Research product.
 
-The internal plugin id is `cloud-compute`. It appears in the settings path `plugins.entries.cloud-compute`, the data folder `plugin-data/cloud-compute`, labels on remote machines and image names. It is not a second product.
+[Watch the 90-second demo on X](https://x.com/TylerRamsarran/status/2120630604085735453)
 
-![The Overview tab of the Own Compute page: two running environments on the host lab-server, a cloud agent sandbox and python-dev, with time left, resource use and buttons for a terminal, port forward, logs, files, extend, stop and delete](docs/images/overview.png)
+## How it works
+
+1. **Ask in chat.** Describe what is needed, for example "Start a python-dev environment on lab-server." Hermes starts nothing until the approval card is answered. The card says what would start (here 2 CPU, 4 GB and a time limit of 4 h) and offers Reject, Always allow and Run. An answer of "session" or "always" covers only the same action with the same values.
+
+   ![A chat message, "Start a python-dev environment on lab-server.", and below it an approval card: Spawn python-dev on lab-server (2 CPU, 4 GB, TTL 4 h)? with the buttons Reject, Always allow and Run](docs/images/how-01-chat-approval.png)
+
+   *The card before it is answered. The lines the model wrote between the message and the card are cropped out.*
+
+2. **Watch it run.** Environments appear on the Overview tab of the Compute page with the time left, idle stop, CPU and memory, and buttons for a terminal, port forward, logs, files, extend, stop, delete and use in chat.
+
+   ![The Overview tab: three running environments on lab-server, agent-a-e8fdecec, agent-a-daeab3cf and python-dev, each with time left, CPU and memory use, and a row of buttons](docs/images/how-02-running.png)
+
+3. **Add machines.** **+ Add host** offers four types: SSH host, Slurm login node, Local Docker/Podman and EC2. **Test connection** checks each part of the connection and shows one line per check.
+
+   ![The Add host dialog, step 1, with the four host types SSH host, Slurm login node, Local Docker/Podman and EC2](docs/images/how-03-host-types.png)
+
+   ![The connection test of a Slurm login node: DNS, network port, SSH login, scheduler and work directory pass, and the container runtime and screen support rows show a dash with a note](docs/images/how-04-connection-test.png)
+
+4. **Run Slurm jobs.** The **Jobs** tab submits a batch job to a Slurm login node, lists it, and shows its output when it ends. From chat the same submit is the tool `slurm_submit`, and its approval card shows the command.
+
+   ![The Submit job dialog: host slurm-cluster, name train-small, a Python command, image docker://python:3.12-slim, partition cpu, 1 CPU, 1 GB, time limit 00:05:00](docs/images/how-05-slurm-submit.png)
+
+   ![The job train-small with the state COMPLETED on host slurm-cluster, and below it the Output dialog showing the line epoch 3/3 done on c1](docs/images/how-06-slurm-done-output.png)
+
+   *Two captures are joined: the Jobs tab and the Output dialog of the same job.*
+
+5. **Hand a task to a cloud agent.** A cloud agent works on a task in a sandbox on a host and hands its work back as a git branch. **Get results** fetches the commits as a new local branch and worktree. Nothing is merged.
+
+   ![A finished cloud agent run, a-daeab3cf, with the badge handoff test, the reply "Handoff test: no model was used. A marker file was committed.", 1 commit ahead, and the buttons Get results, Stop and Run again](docs/images/how-07-agent-done.png)
+
+   ![The same run after Get results: the branch refs/heads/cloud/a-daeab3cf/add-a-notes-md-with-one-sentence-describ and a worktree folder, with the note that nothing was merged](docs/images/how-08-agent-fetched.png)
+
+   *This run used the Handoff test (no model) template. No model wrote the reply.*
+
+6. **Nothing is lost on delete.** The delete dialog saves the files in `/work` to this computer first, and deletes nothing if the save fails. Afterwards it names the saved copy.
+
+   ![The Delete python-dev dialog with the box "Save the files in /work to this computer first" ticked and the note "If saving fails, nothing is deleted."](docs/images/how-09-delete-dialog.png)
+
+   ![The message "python-dev was deleted": the files in /work, 2 files, 1.1 KB, were saved to a .tar.gz file in C:\demo\exports](docs/images/how-10-delete-saved.png)
+
+The actions on the page that start, run or stop things are also chat tools: 15 in all. When Hermes approvals are on, a call that starts, changes or deletes something shows an approval card first. The buttons on the page need no card. See [Using it from chat](#using-it-from-chat) and [Data and safety](#data-and-safety).
+
+The internal plugin id is `cloud-compute`. It appears in the settings path `plugins.entries.cloud-compute`, the data folder `plugin-data/cloud-compute`, labels on remote machines and image names. It is not a second product.
 
 ## What it can do
 
