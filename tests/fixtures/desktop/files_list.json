@@ -1,0 +1,18 @@
+{
+  "path": "/work",
+  "entries": [
+    {
+      "name": "results",
+      "type": "dir",
+      "size": 4096,
+      "mtime": "2026-11-08T14:00:00Z"
+    },
+    {
+      "name": "notes.txt",
+      "type": "file",
+      "size": 1280,
+      "mtime": "2026-11-08T14:05:00Z"
+    }
+  ],
+  "truncated": false
+}

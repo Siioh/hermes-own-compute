@@ -1,0 +1,4 @@
+{
+  "ok": true,
+  "output_tail": "STEP 12/12: COMMIT localhost/cloud-compute-novnc:1\n--> 7c1f0d5e2a9b\nSuccessfully tagged localhost/cloud-compute-novnc:1"
+}

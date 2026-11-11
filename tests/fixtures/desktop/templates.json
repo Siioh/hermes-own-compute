@@ -1,0 +1,173 @@
+[
+  {
+    "id": "python-dev",
+    "name": "Python dev",
+    "description": "Python 3.12 shell with a work directory.",
+    "kind": "container",
+    "image": "docker.io/library/python:3.12-slim",
+    "command": [
+      "sleep",
+      "infinity"
+    ],
+    "workdir": "/work",
+    "cpus": 2,
+    "memory_gb": 4,
+    "gpus": 0,
+    "ttl_minutes": null,
+    "idle_minutes": null,
+    "persistent": false,
+    "network": "default",
+    "display": false,
+    "variables": [],
+    "host_kinds": [
+      "ssh",
+      "local"
+    ],
+    "agent": null,
+    "builtin": true,
+    "ports": []
+  },
+  {
+    "id": "desktop-novnc",
+    "name": "Desktop (noVNC)",
+    "description": "A small Linux desktop you can open as a screen.",
+    "kind": "container",
+    "image": "localhost/cloud-compute-novnc:1",
+    "command": [
+      "/usr/local/bin/start-desktop.sh"
+    ],
+    "workdir": "/work",
+    "cpus": 2,
+    "memory_gb": 4,
+    "gpus": 0,
+    "ttl_minutes": null,
+    "idle_minutes": null,
+    "persistent": false,
+    "network": "default",
+    "display": true,
+    "variables": [],
+    "host_kinds": [
+      "ssh",
+      "local"
+    ],
+    "agent": null,
+    "builtin": true,
+    "ports": []
+  },
+  {
+    "id": "hermes-agent",
+    "name": "Hermes cloud agent",
+    "description": "Headless Hermes agent working on a git branch in a sandbox. Needs agent.base_url and agent.model (an OpenAI-compatible endpoint) and the model key secret named in agent.key_secret.",
+    "kind": "container",
+    "image": "localhost/cloud-compute-agent:0.1",
+    "command": [
+      "sleep",
+      "infinity"
+    ],
+    "workdir": "/work",
+    "cpus": 2,
+    "memory_gb": 4,
+    "gpus": 0,
+    "ttl_minutes": null,
+    "idle_minutes": null,
+    "persistent": false,
+    "network": "default",
+    "display": false,
+    "variables": [
+      {
+        "name": "CC_AGENT_API_KEY",
+        "source": "secret:CC_AGENT_API_KEY",
+        "scope": "runtime",
+        "hosts": null,
+        "description": "API key for the cloud agent's model endpoint. Sent only into cloud-agent sandboxes in Hermes mode, after you approve the run. Use a scoped, spend-capped key."
+      }
+    ],
+    "host_kinds": [
+      "ssh",
+      "local"
+    ],
+    "agent": {
+      "enabled": true,
+      "mode": "hermes",
+      "model": null,
+      "base_url": null,
+      "key_secret": "CC_AGENT_API_KEY",
+      "max_turns": 30,
+      "image_base": null
+    },
+    "builtin": true,
+    "ports": []
+  },
+  {
+    "id": "slurm-batch",
+    "name": "Slurm batch job",
+    "description": "A plain batch job with optional Apptainer image.",
+    "kind": "slurm_job",
+    "image": "docker://python:3.12-slim",
+    "command": [
+      "python",
+      "-V"
+    ],
+    "workdir": "/work",
+    "cpus": 4,
+    "memory_gb": 8,
+    "gpus": 0,
+    "ttl_minutes": null,
+    "idle_minutes": null,
+    "persistent": false,
+    "network": "default",
+    "display": false,
+    "variables": [],
+    "host_kinds": [
+      "slurm"
+    ],
+    "agent": null,
+    "builtin": true,
+    "ports": []
+  },
+  {
+    "id": "ml-gpu",
+    "name": "ML on GPU",
+    "description": "PyTorch with the Hugging Face cache mounted.",
+    "kind": "container",
+    "image": "docker.io/pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime",
+    "command": [
+      "sleep",
+      "infinity"
+    ],
+    "workdir": "/work",
+    "cpus": 4,
+    "memory_gb": 12,
+    "gpus": 1,
+    "ttl_minutes": 480,
+    "idle_minutes": 120,
+    "persistent": true,
+    "network": "default",
+    "display": false,
+    "variables": [
+      {
+        "name": "HF_TOKEN",
+        "source": "secret:HF_TOKEN",
+        "scope": "redacted",
+        "hosts": [
+          "x1carbon"
+        ],
+        "description": "Hugging Face access token for downloading models. Optional; add it only if a model needs it."
+      },
+      {
+        "name": "LANG",
+        "source": "literal:C.UTF-8",
+        "scope": "runtime",
+        "hosts": null,
+        "description": "Language and character encoding the shell uses."
+      }
+    ],
+    "host_kinds": [
+      "ssh",
+      "local"
+    ],
+    "agent": null,
+    "builtin": false,
+    "ports": []
+  }
+]

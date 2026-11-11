@@ -1,0 +1,13 @@
+{
+  "id": "x-1a2b3c4d",
+  "instance_id": "i-ab12cd34",
+  "instance_name": "python-dev",
+  "host_id": "x1carbon",
+  "source_path": "/work",
+  "local_path": "C:/Users/example/AppData/Local/hermes/plugin-data/cloud-compute/exports/python-dev-i-ab12cd34/20261108T143000Z-fetch.tar.gz",
+  "bytes": 2048576,
+  "created_at": "2026-11-08T14:30:00Z",
+  "reason": "fetch",
+  "files": 12,
+  "extracted_to": null
+}

@@ -1,0 +1,21 @@
+.worktrees/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and credentials (specific patterns only; do NOT use a broad *key* glob,
+# it would ignore legitimate source such as keys.py or test_keys.py)
+*.env
+.env*
+secrets/
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+*.p12
+*.pfx
+
+dist/
+build/
+node_modules/

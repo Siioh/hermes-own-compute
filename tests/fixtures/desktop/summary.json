@@ -1,0 +1,39 @@
+{
+  "hosts": {
+    "total": 6,
+    "online": 3,
+    "degraded": 1,
+    "auth_required": 1,
+    "offline": 1
+  },
+  "instances": {
+    "running": 2,
+    "total": 3
+  },
+  "jobs": {
+    "active": 2,
+    "finished_24h": 1
+  },
+  "attention": [
+    {
+      "kind": "host",
+      "id": "nas-box",
+      "message": "Homelab NAS is degraded: Container runtime not found: install podman or docker, then probe again."
+    },
+    {
+      "kind": "host",
+      "id": "lab-gpu",
+      "message": "Lab GPU box is offline"
+    },
+    {
+      "kind": "host",
+      "id": "campus-login",
+      "message": "Campus HPC login needs login: run ssh campus-login once"
+    }
+  ],
+  "generated_at": "2026-11-08T14:30:00Z",
+  "approvals": {
+    "mode": "manual",
+    "off": false
+  }
+}

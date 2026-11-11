@@ -1,0 +1,17 @@
+{
+  "id": "j-7c8d9e0f",
+  "host_id": "slurm-x1",
+  "slurm_job_id": "44",
+  "name": "hello",
+  "state": "PENDING",
+  "partition": "debug",
+  "nodes": null,
+  "submitted_at": "2026-11-08T13:45:00Z",
+  "started_at": null,
+  "ended_at": null,
+  "exit_code": null,
+  "job_dir": "/data/cloud-compute/jobs/j-7c8d9e0f",
+  "image": null,
+  "session_id": null,
+  "notified": false
+}

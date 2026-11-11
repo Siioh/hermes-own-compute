@@ -1,0 +1,12 @@
+{
+  "deleted": [
+    "j-99aa11bb",
+    "j-c0ffee12"
+  ],
+  "count": 2,
+  "job_dirs": [
+    "/data/cloud-compute/jobs/j-99aa11bb",
+    "/data/cloud-compute/jobs/j-c0ffee12"
+  ],
+  "note": "Removed 2 finished jobs from this computer's job list only. Their folders on the cluster were not deleted (see job_dirs)."
+}

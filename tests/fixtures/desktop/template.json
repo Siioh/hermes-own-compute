@@ -1,0 +1,28 @@
+{
+  "id": "python-dev",
+  "name": "Python dev",
+  "description": "Python 3.12 shell with a work directory.",
+  "kind": "container",
+  "image": "docker.io/library/python:3.12-slim",
+  "command": [
+    "sleep",
+    "infinity"
+  ],
+  "workdir": "/work",
+  "cpus": 2,
+  "memory_gb": 4,
+  "gpus": 0,
+  "ttl_minutes": null,
+  "idle_minutes": null,
+  "persistent": false,
+  "network": "default",
+  "display": false,
+  "variables": [],
+  "host_kinds": [
+    "ssh",
+    "local"
+  ],
+  "agent": null,
+  "builtin": true,
+  "ports": []
+}

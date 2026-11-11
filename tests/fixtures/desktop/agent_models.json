@@ -1,0 +1,17 @@
+{
+  "models": [
+    {
+      "id": "m-6d85700b",
+      "name": "DeepSeek V4.1 Flash at inference.baseten.co",
+      "base_url": "https://inference.baseten.co/v1",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-Fast",
+      "key_secret": "CC_AGENT_API_KEY",
+      "is_default": true,
+      "endpoint_host": "inference.baseten.co",
+      "key_set": true
+    }
+  ],
+  "detected": [],
+  "default_id": "m-6d85700b",
+  "unavailable": []
+}

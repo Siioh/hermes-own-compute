@@ -1,0 +1,83 @@
+{
+  "ok": true,
+  "status": "online",
+  "steps": [
+    {
+      "name": "dns",
+      "ok": true,
+      "detail": "x1carbon resolves to 192.0.2.20",
+      "hint": null,
+      "ms": 4.0
+    },
+    {
+      "name": "tcp",
+      "ok": true,
+      "detail": "Port 22 answered",
+      "hint": null,
+      "ms": 3.1
+    },
+    {
+      "name": "auth",
+      "ok": true,
+      "detail": "Logged in with the SSH agent",
+      "hint": null,
+      "ms": 210.5
+    },
+    {
+      "name": "runtime",
+      "ok": true,
+      "detail": "podman 5.8.0 (rootless)",
+      "hint": null,
+      "ms": 96.2
+    },
+    {
+      "name": "scheduler",
+      "ok": null,
+      "detail": "Not a Slurm host",
+      "hint": null,
+      "ms": null
+    },
+    {
+      "name": "display",
+      "ok": false,
+      "detail": "Display image not built",
+      "hint": "Use Build display image on the host card.",
+      "ms": 41.7
+    },
+    {
+      "name": "gpu",
+      "ok": true,
+      "detail": "1 GPU: NVIDIA GeForce RTX 3060",
+      "hint": null,
+      "ms": 63.0
+    }
+  ],
+  "capabilities": {
+    "os": "Fedora Linux 43",
+    "arch": "x86_64",
+    "runtime": "podman",
+    "runtime_version": "5.8.0",
+    "rootless": true,
+    "containers": true,
+    "batch_jobs": false,
+    "interactive_terminal": true,
+    "port_forward": true,
+    "display": "buildable",
+    "display_reason": "Runtime present; the display image can be built.",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 3060",
+        "mem_total_mb": 12288,
+        "mem_used_mb": 512,
+        "util_pct": 3.0
+      }
+    ],
+    "scheduler": null,
+    "scheduler_version": null,
+    "apptainer_version": null,
+    "partitions": [],
+    "workdir_shared": null,
+    "workdir_detail": ""
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "my-shell",
+  "name": "My shell",
+  "description": "Scratch environment.",
+  "kind": "container",
+  "image": "docker.io/library/python:3.12-slim",
+  "command": [
+    "sleep",
+    "infinity"
+  ],
+  "workdir": "/work",
+  "cpus": 2,
+  "memory_gb": 4,
+  "gpus": 0,
+  "ttl_minutes": 120,
+  "idle_minutes": 60,
+  "persistent": false,
+  "network": "default",
+  "display": false,
+  "variables": [],
+  "host_kinds": [
+    "ssh",
+    "local"
+  ],
+  "agent": null,
+  "builtin": false,
+  "ports": []
+}

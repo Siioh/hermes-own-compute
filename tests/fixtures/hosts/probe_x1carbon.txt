@@ -1,0 +1,21 @@
+==os
+Linux x86_64
+PRETTY_NAME="Fedora Linux 43 (Workstation Edition)"
+==cpu
+nproc=8
+load=0.16
+==mem
+MemTotal:       16102016 kB
+MemAvailable:   12720924 kB
+==disk
+path=/home/dev
+/dev/nvme0n1p6   260046848 101134848 157623312      40% /home
+==gpu
+==runtime
+rt=podman
+version=5.8.4
+rootless=true
+==display
+podman=no
+==slurm
+==apptainer

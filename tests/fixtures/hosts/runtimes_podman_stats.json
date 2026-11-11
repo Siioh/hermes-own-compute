@@ -1,0 +1,26 @@
+[
+ {
+  "id": "14ec60af3856",
+  "name": "mysql",
+  "cpu_time": "20.708196s",
+  "cpu_percent": "0.24%",
+  "avg_cpu": "0.24%",
+  "mem_usage": "105.4MB / 16.49GB",
+  "mem_percent": "0.64%",
+  "net_io": "252kB / 256.7kB",
+  "block_io": "3.293MB / 43.17MB",
+  "pids": "13"
+ },
+ {
+  "id": "f3df4e2d7b93",
+  "name": "slurmdbd",
+  "cpu_time": "4.093821s",
+  "cpu_percent": "0.05%",
+  "avg_cpu": "0.05%",
+  "mem_usage": "5.784MB / 16.49GB",
+  "mem_percent": "0.04%",
+  "net_io": "292.3kB / 268.1kB",
+  "block_io": "0B / 98.3kB",
+  "pids": "27"
+ }
+]

@@ -1,0 +1,13 @@
+[
+  "host_id",
+  "name",
+  "command",
+  "script",
+  "image",
+  "partition",
+  "cpus",
+  "mem_gb",
+  "gpus",
+  "time_limit",
+  "array"
+]

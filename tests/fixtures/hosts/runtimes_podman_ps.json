@@ -1,0 +1,22 @@
+[
+ {
+  "Command": ["sleep", "infinity"],
+  "Id": "7aa85feee9ac8b8c6be866863b42826ba7687c11b649f5c741617a59c83ce654",
+  "Image": "localhost/nikolaik/python-nodejs:python3.11-nodejs20",
+  "Labels": {"hermes-agent": "1", "hermes-egress": "off"},
+  "Names": ["hermes-b310bf89"],
+  "Ports": null,
+  "State": "exited",
+  "Status": "Exited (0) 292 years ago"
+ },
+ {
+  "Command": ["sleep", "infinity"],
+  "Id": "0b1baa883aa4f00000000000000000000000000000000000000000000000abcd",
+  "Image": "localhost/cloud-compute-novnc:0.1",
+  "Labels": {"io.cloud-compute.managed": "1", "io.cloud-compute.instance": "i-0a1b2c3d", "io.cloud-compute.display": "novnc:6080"},
+  "Names": ["cc-i-0a1b2c3d"],
+  "Ports": [{"host_ip": "127.0.0.1", "container_port": 6080, "host_port": 41234, "range": 1, "protocol": "tcp"}],
+  "State": "running",
+  "Status": "Up 5 minutes"
+ }
+]

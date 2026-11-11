@@ -1,0 +1,10 @@
+{
+  "run_id": "a-5e6f7a8b",
+  "ref": "refs/heads/cloud/a-5e6f7a8b/cloud/write-readme",
+  "commits_ahead": 1,
+  "worktree_path": "/home/dev/code/demo-a-5e6f7a8b",
+  "diverged": true,
+  "conflicts_dry_run": [
+    "README.md"
+  ]
+}

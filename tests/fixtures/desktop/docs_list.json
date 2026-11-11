@@ -1,0 +1,54 @@
+[
+  {
+    "topic": "getting-started",
+    "title": "Getting started"
+  },
+  {
+    "topic": "ssh-host",
+    "title": "SSH hosts"
+  },
+  {
+    "topic": "slurm",
+    "title": "Slurm login nodes"
+  },
+  {
+    "topic": "local",
+    "title": "Local Docker/Podman"
+  },
+  {
+    "topic": "ec2",
+    "title": "EC2"
+  },
+  {
+    "topic": "templates",
+    "title": "Environment templates"
+  },
+  {
+    "topic": "keeping-data",
+    "title": "Keeping your data"
+  },
+  {
+    "topic": "display",
+    "title": "Remote screen"
+  },
+  {
+    "topic": "terminal",
+    "title": "Terminals and ports"
+  },
+  {
+    "topic": "chat",
+    "title": "Using Own Compute from chat"
+  },
+  {
+    "topic": "agents",
+    "title": "Cloud agents"
+  },
+  {
+    "topic": "security",
+    "title": "Security and privacy"
+  },
+  {
+    "topic": "troubleshooting",
+    "title": "Troubleshooting"
+  }
+]

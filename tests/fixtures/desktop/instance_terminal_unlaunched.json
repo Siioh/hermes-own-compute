@@ -1,0 +1,7 @@
+{
+  "launched": false,
+  "method": "none",
+  "command_preview": "ssh -t x1carbon podman exec -it cc-i-ab12cd34 bash -l",
+  "copy_command": "ssh -t x1carbon podman exec -it cc-i-ab12cd34 bash -l",
+  "error": "No terminal program could be started."
+}

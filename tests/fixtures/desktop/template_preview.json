@@ -1,0 +1,38 @@
+{
+  "template_id": "ml-gpu",
+  "host_id": "x1carbon",
+  "image": "docker.io/pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime",
+  "command": [
+    "sleep",
+    "infinity"
+  ],
+  "cpus": 4,
+  "memory_gb": 12,
+  "gpus": 1,
+  "network": "default",
+  "display": false,
+  "variables": [
+    {
+      "name": "HF_TOKEN",
+      "source_kind": "secret",
+      "scope": "redacted",
+      "will_send": false,
+      "reason": "secret HF_TOKEN not set"
+    },
+    {
+      "name": "LANG",
+      "source_kind": "literal",
+      "scope": "runtime",
+      "will_send": true,
+      "reason": ""
+    }
+  ],
+  "labels": {
+    "io.cloud-compute.install": "install-1",
+    "io.cloud-compute.template": "ml-gpu"
+  },
+  "publish": [],
+  "warnings": [
+    "HF_TOKEN is not set; the variable will be skipped."
+  ]
+}

@@ -1,0 +1,115 @@
+[
+  {
+    "kind": "ssh",
+    "title": "SSH host",
+    "one_liner": "Run sandboxed containers on a Linux machine you can SSH into.",
+    "when_to_use": "Your own laptop, workstation, homelab or VM.",
+    "capabilities": {
+      "containers": "yes",
+      "batch_jobs": "no",
+      "interactive_terminal": "yes",
+      "display": "partial",
+      "port_forward": "yes",
+      "gpu": "partial",
+      "agents": "partial",
+      "costs_money": "no"
+    },
+    "capability_notes": {
+      "display": "Needs the display image on the host; the Screen button offers to build it.",
+      "gpu": "If the host has a GPU that Docker or Podman can use.",
+      "agents": "Off until allowed in the host's sandbox defaults."
+    },
+    "needs": [
+      "An SSH alias from your SSH config, or host, user and port. Optional jump host.",
+      "A key loaded in your SSH agent, or a key file path.",
+      "Podman (rootless is fine) or Docker on the remote machine."
+    ],
+    "learn_more_topic": "ssh-host",
+    "mvp": true
+  },
+  {
+    "kind": "slurm",
+    "title": "Slurm login node",
+    "one_liner": "Submit batch jobs to an HPC cluster through its login node.",
+    "when_to_use": "HPC or lab clusters, sweeps, scheduled work.",
+    "capabilities": {
+      "containers": "no",
+      "batch_jobs": "yes",
+      "interactive_terminal": "partial",
+      "display": "no",
+      "port_forward": "no",
+      "gpu": "partial",
+      "agents": "no",
+      "costs_money": "partial"
+    },
+    "capability_notes": {
+      "interactive_terminal": "A shell on the login node, or inside a running job.",
+      "gpu": "If your cluster has GPUs.",
+      "costs_money": "Only if your site bills for cluster time."
+    },
+    "needs": [
+      "An SSH alias or host, user and port, as for an SSH host. Optional partition and work directory.",
+      "The same SSH key; if your site requires MFA, log in once in a terminal first.",
+      "sbatch, squeue, sacct and scancel on the PATH of a login shell."
+    ],
+    "learn_more_topic": "slurm",
+    "mvp": true
+  },
+  {
+    "kind": "local",
+    "title": "Local Docker/Podman",
+    "one_liner": "Run containers on this computer.",
+    "when_to_use": "Quick tests without another machine.",
+    "capabilities": {
+      "containers": "yes",
+      "batch_jobs": "no",
+      "interactive_terminal": "yes",
+      "display": "partial",
+      "port_forward": "yes",
+      "gpu": "partial",
+      "agents": "partial",
+      "costs_money": "no"
+    },
+    "capability_notes": {
+      "display": "Needs the display image on this computer; the Screen button offers to build it.",
+      "port_forward": "Forwards the screen and any ports a template publishes.",
+      "gpu": "If Docker or Podman GPU access works on this computer.",
+      "agents": "Off until allowed in the host's sandbox defaults."
+    },
+    "needs": [
+      "No endpoint and no login: everything happens on this computer.",
+      "Docker Desktop or Podman on this computer, reachable from the command line."
+    ],
+    "learn_more_topic": "local",
+    "mvp": true
+  },
+  {
+    "kind": "ec2",
+    "title": "EC2",
+    "one_liner": "Start an AWS machine on demand and run containers on it like an SSH host.",
+    "when_to_use": "You need more CPU than you own, for a few hours, with a time limit.",
+    "capabilities": {
+      "containers": "yes",
+      "batch_jobs": "no",
+      "interactive_terminal": "yes",
+      "display": "partial",
+      "port_forward": "yes",
+      "gpu": "partial",
+      "agents": "partial",
+      "costs_money": "yes"
+    },
+    "capability_notes": {
+      "display": "Needs about 2 GB of memory; a 1 GB instance type is too small for it.",
+      "gpu": "Only with a GPU instance type that the AWS account's quota allows.",
+      "agents": "Off until allowed in the host's sandbox defaults.",
+      "costs_money": "Billed by AWS while the machine runs, and a little for its disk while it is stopped."
+    },
+    "needs": [
+      "An AWS region and an IAM user's key, stored as Hermes secrets (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY).",
+      "Nothing on a remote machine: the instance is created, given Docker and stopped for you.",
+      "One lookup of this computer's public address (checkip.amazonaws.com) for the SSH rule, unless you type it."
+    ],
+    "learn_more_topic": "ec2",
+    "mvp": true
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "topic": "ssh-host",
+  "title": "SSH hosts",
+  "body_md": "# SSH hosts\n\nAn SSH host is a Linux machine you can reach with `ssh`.\n\n## Requirements\n\n- Podman (rootless is fine) or Docker\n- A key loaded in your SSH agent, or a key file path\n\nPorts stay on loopback; nothing is exposed to your network.\n",
+  "links": [
+    {
+      "label": "Podman rootless tutorial",
+      "url": "https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md"
+    },
+    {
+      "label": "OpenSSH configuration",
+      "url": "https://man.openbsd.org/ssh_config"
+    }
+  ]
+}

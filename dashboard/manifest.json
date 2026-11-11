@@ -1,0 +1,8 @@
+{
+  "name": "cloud-compute",
+  "label": "Own Compute",
+  "description": "Backend API for the Own Compute Desktop page.",
+  "version": "0.1.0",
+  "tab": {"hidden": true},
+  "api": "plugin_api.py"
+}

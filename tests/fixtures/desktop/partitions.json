@@ -1,0 +1,41 @@
+[
+  {
+    "name": "debug",
+    "state": "up",
+    "nodes": 1,
+    "cpus_alloc": 0,
+    "cpus_idle": 16,
+    "cpus_total": 16,
+    "mem_total_mb": 15990,
+    "mem_free_mb": 12100,
+    "gres": null,
+    "time_limit": "1:00:00",
+    "default": true
+  },
+  {
+    "name": "batch",
+    "state": "up",
+    "nodes": 2,
+    "cpus_alloc": 4,
+    "cpus_idle": 28,
+    "cpus_total": 32,
+    "mem_total_mb": 31980,
+    "mem_free_mb": 20480,
+    "gres": null,
+    "time_limit": "1-00:00:00",
+    "default": false
+  },
+  {
+    "name": "gpu",
+    "state": "up",
+    "nodes": 1,
+    "cpus_alloc": 2,
+    "cpus_idle": 6,
+    "cpus_total": 8,
+    "mem_total_mb": 15990,
+    "mem_free_mb": 9000,
+    "gres": "gpu:rtx3060:1",
+    "time_limit": "8:00:00",
+    "default": false
+  }
+]

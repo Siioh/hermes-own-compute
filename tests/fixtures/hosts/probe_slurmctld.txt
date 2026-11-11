@@ -1,0 +1,26 @@
+==os
+Linux x86_64
+PRETTY_NAME="Rocky Linux 9.8 (Blue Onyx)"
+==cpu
+nproc=8
+load=0.16
+==mem
+MemTotal:       16102016 kB
+MemAvailable:   12706044 kB
+==disk
+path=/root
+overlay          260046848 101134848 157623312      40% /
+==gpu
+==runtime
+==display
+==slurm
+version=slurm 26.05.5
+sinfo_rc=0
+part|cpu*|up|infinite|2|0/16/0/16|15724|(null)
+part|gpu|up|infinite|0|0/0/0/0|0|(null)
+node|c1|cpu*|0/8/0/8|15724|1797|idle
+node|c2|cpu*|0/8/0/8|15724|1797|idle
+scn|NodeName=c1 Arch=x86_64 CoresPerSocket=1 CPUAlloc=0 CPUEfctv=8 CPUTot=8 CPULoad=0.15 AvailableFeatures=(null) ActiveFeatures=(null) Gres=(null) NodeAddr=c1 NodeHostName=c1 Version=26.05.5 OS=Linux 6.17.12-300.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC RealMemory=15724 AllocMem=0 FreeMem=954 Sockets=8 Boards=1 State=IDLE ThreadsPerCore=1 TmpDisk=0 Weight=1 Owner=N/A MCS_label=N/A Partitions=cpu BootTime=2026-11-08T03:41:02 SlurmdStartTime=2026-11-08T03:41:20 LastBusyTime=2026-11-08T07:30:18 ResumeAfterTime=None CfgTRES=cpu=8,mem=15724M,billing=8 AllocTRES= CapWatts=n/a CurrentWatts=0 AveWatts=0
+scn|NodeName=c2 Arch=x86_64 CoresPerSocket=1 CPUAlloc=0 CPUEfctv=8 CPUTot=8 CPULoad=0.15 AvailableFeatures=(null) ActiveFeatures=(null) Gres=(null) NodeAddr=c2 NodeHostName=c2 Version=26.05.5 OS=Linux 6.17.12-300.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC RealMemory=15724 AllocMem=0 FreeMem=1797 Sockets=8 Boards=1 State=IDLE ThreadsPerCore=1 TmpDisk=0 Weight=1 Owner=N/A MCS_label=N/A Partitions=cpu BootTime=2026-11-08T03:41:02 SlurmdStartTime=2026-11-08T03:41:20 LastBusyTime=2026-11-08T07:30:18 ResumeAfterTime=None CfgTRES=cpu=8,mem=15724M,billing=8 AllocTRES= CapWatts=n/a CurrentWatts=0 AveWatts=0
+==apptainer
+apptainer version 1.5.5-1.el9

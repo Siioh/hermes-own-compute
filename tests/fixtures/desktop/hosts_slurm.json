@@ -1,0 +1,186 @@
+[
+  {
+    "spec": {
+      "id": "slurm-x1",
+      "name": "Slurm test cluster",
+      "kind": "slurm",
+      "address": "x1carbon",
+      "user": "dev",
+      "port": 22,
+      "identity_file": null,
+      "jump_host": null,
+      "runtime_pref": "auto",
+      "exec_prefix": [
+        "podman",
+        "exec",
+        "-i",
+        "slurmctld"
+      ],
+      "interactive_prefix": [
+        "podman",
+        "exec",
+        "-it",
+        "slurmctld"
+      ],
+      "slurm": {
+        "default_partition": "debug",
+        "account": null,
+        "qos": null,
+        "workdir": "/data/cloud-compute",
+        "container": "apptainer",
+        "max_active_jobs": 20,
+        "poll_seconds": 60
+      },
+      "ec2": null,
+      "limits": {
+        "max_instances": 4,
+        "max_cpus": null,
+        "max_memory_gb": null,
+        "allow_agents": false
+      },
+      "created_at": "2026-11-01T09:15:00Z"
+    },
+    "state": {
+      "host_id": "slurm-x1",
+      "status": "online",
+      "last_seen": "2026-11-08T14:30:00Z",
+      "last_error": null,
+      "latency_ms": 11.8,
+      "capabilities": {
+        "os": "Rocky Linux 9.4",
+        "arch": "x86_64",
+        "runtime": null,
+        "runtime_version": null,
+        "rootless": null,
+        "containers": false,
+        "batch_jobs": true,
+        "interactive_terminal": true,
+        "port_forward": false,
+        "display": "unsupported",
+        "display_reason": "Compute nodes sit behind the login node.",
+        "gpus": [],
+        "scheduler": "slurm",
+        "scheduler_version": "24.05.3",
+        "apptainer_version": "1.3.4",
+        "partitions": [
+          {
+            "name": "debug",
+            "state": "up",
+            "nodes": 1,
+            "cpus_alloc": 0,
+            "cpus_idle": 16,
+            "cpus_total": 16,
+            "mem_total_mb": 15990,
+            "mem_free_mb": 12100,
+            "gres": null,
+            "time_limit": "1:00:00",
+            "default": true
+          },
+          {
+            "name": "batch",
+            "state": "up",
+            "nodes": 2,
+            "cpus_alloc": 4,
+            "cpus_idle": 28,
+            "cpus_total": 32,
+            "mem_total_mb": 31980,
+            "mem_free_mb": 20480,
+            "gres": null,
+            "time_limit": "1-00:00:00",
+            "default": false
+          },
+          {
+            "name": "gpu",
+            "state": "up",
+            "nodes": 1,
+            "cpus_alloc": 2,
+            "cpus_idle": 6,
+            "cpus_total": 8,
+            "mem_total_mb": 15990,
+            "mem_free_mb": 9000,
+            "gres": "gpu:rtx3060:1",
+            "time_limit": "8:00:00",
+            "default": false
+          }
+        ],
+        "workdir_shared": null,
+        "workdir_detail": ""
+      },
+      "resources": {
+        "cpu_total": 56,
+        "cpu_used": 6,
+        "mem_total_mb": 63960,
+        "mem_used_mb": 18200,
+        "disk_path": "/data/cloud-compute",
+        "disk_total_gb": 200.0,
+        "disk_free_gb": 151.2,
+        "gpus": [],
+        "source": "slurm",
+        "basis": "allocated",
+        "sampled_at": "2026-11-08T14:30:00Z"
+      },
+      "probed_at": "2026-11-08T14:30:00Z"
+    }
+  },
+  {
+    "spec": {
+      "id": "campus-login",
+      "name": "Campus HPC login",
+      "kind": "slurm",
+      "address": "login.hpc.example.edu",
+      "user": "researcher",
+      "port": 22,
+      "identity_file": null,
+      "jump_host": null,
+      "runtime_pref": "auto",
+      "exec_prefix": [],
+      "interactive_prefix": [],
+      "slurm": {
+        "default_partition": "batch",
+        "account": "lab42",
+        "qos": "normal",
+        "workdir": "~/cloud-compute",
+        "container": "apptainer",
+        "max_active_jobs": 20,
+        "poll_seconds": 60
+      },
+      "ec2": null,
+      "limits": {
+        "max_instances": 4,
+        "max_cpus": null,
+        "max_memory_gb": null,
+        "allow_agents": false
+      },
+      "created_at": "2026-11-04T12:00:00Z"
+    },
+    "state": {
+      "host_id": "campus-login",
+      "status": "auth_required",
+      "last_seen": "2026-11-08T14:30:00Z",
+      "last_error": "SSH login needs a prompt: run `ssh login.hpc.example.edu` once in a terminal.",
+      "latency_ms": 42.0,
+      "capabilities": {
+        "os": null,
+        "arch": null,
+        "runtime": null,
+        "runtime_version": null,
+        "rootless": null,
+        "containers": false,
+        "batch_jobs": false,
+        "interactive_terminal": false,
+        "port_forward": false,
+        "display": "unsupported",
+        "display_reason": "Compute nodes sit behind the login node.",
+        "gpus": [],
+        "scheduler": null,
+        "scheduler_version": null,
+        "apptainer_version": null,
+        "partitions": [],
+        "workdir_shared": null,
+        "workdir_detail": ""
+      },
+      "resources": null,
+      "probed_at": "2026-11-08T14:30:00Z"
+    }
+  }
+]

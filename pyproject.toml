@@ -1,0 +1,10 @@
+[project]
+name = "hermes-own-compute"
+version = "0.1.0"
+description = "Own Compute for Hermes Agent. Bring your own compute: Hermes sandboxes, Slurm jobs and agents on the machines and cluster accounts you already have."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Tyler Ramsarran" }]
+requires-python = ">=3.10"
+# No third-party dependencies: the plugin runs on the Python standard library.
+dependencies = []

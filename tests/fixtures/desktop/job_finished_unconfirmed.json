@@ -1,0 +1,9 @@
+{
+  "id": "j-0ddba11a",
+  "host_id": "slurm-x1",
+  "slurm_job_id": "44",
+  "name": "legacy-run",
+  "state": "UNKNOWN",
+  "exit_code": null,
+  "confirmed": false
+}

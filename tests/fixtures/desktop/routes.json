@@ -1,0 +1,379 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "fixture": "health.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/summary",
+      "fixture": "summary.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/host-types",
+      "fixture": "host_types.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/docs",
+      "fixture": "docs_list.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/docs/{topic}",
+      "fixture": "docs_topic.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/hosts",
+      "fixture": "hosts.json",
+      "model": "HostWithState[]"
+    },
+    {
+      "method": "GET",
+      "path": "/hosts",
+      "query": {
+        "kind": "slurm"
+      },
+      "fixture": "hosts_slurm.json",
+      "model": "HostWithState[]"
+    },
+    {
+      "method": "POST",
+      "path": "/hosts",
+      "fixture": "host_created.json",
+      "model": "HostWithState"
+    },
+    {
+      "method": "GET",
+      "path": "/hosts/{id}",
+      "fixture": "host.json",
+      "model": "HostWithState"
+    },
+    {
+      "method": "POST",
+      "path": "/hosts/test",
+      "fixture": "host_test.json",
+      "model": "TestResult"
+    },
+    {
+      "method": "PATCH",
+      "path": "/hosts/{id}",
+      "fixture": "host_patched.json",
+      "model": "HostWithState"
+    },
+    {
+      "method": "DELETE",
+      "path": "/hosts/{id}",
+      "fixture": "host_deleted.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/hosts/{id}/probe",
+      "fixture": "host_probe.json",
+      "model": "HostState"
+    },
+    {
+      "method": "POST",
+      "path": "/hosts/{id}/display-image",
+      "fixture": "display_image.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/hosts/{id}/terminal",
+      "fixture": "host_terminal.json",
+      "model": "TerminalLaunch"
+    },
+    {
+      "method": "GET",
+      "path": "/hosts/{id}/partitions",
+      "fixture": "partitions.json",
+      "model": "Partition[]"
+    },
+    {
+      "method": "GET",
+      "path": "/templates",
+      "fixture": "templates.json",
+      "model": "TemplateSpec[]"
+    },
+    {
+      "method": "POST",
+      "path": "/templates",
+      "fixture": "template_created.json",
+      "model": "TemplateSpec"
+    },
+    {
+      "method": "GET",
+      "path": "/templates/{id}",
+      "fixture": "template.json",
+      "model": "TemplateSpec"
+    },
+    {
+      "method": "GET",
+      "path": "/templates/{id}",
+      "query": {
+        "default": "1"
+      },
+      "fixture": "template_default.json",
+      "model": "TemplateSpec"
+    },
+    {
+      "method": "PATCH",
+      "path": "/templates/{id}",
+      "fixture": "template_patched.json",
+      "model": "TemplateSpec"
+    },
+    {
+      "method": "DELETE",
+      "path": "/templates/{id}",
+      "fixture": "template_deleted.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/templates/{id}/preview",
+      "fixture": "template_preview.json",
+      "model": "SendPreview"
+    },
+    {
+      "method": "GET",
+      "path": "/instances",
+      "fixture": "instances.json",
+      "model": "InstanceRecord[]"
+    },
+    {
+      "method": "GET",
+      "path": "/instances/{id}",
+      "fixture": "instance.json",
+      "model": "InstanceRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/instances",
+      "fixture": "instance_created.json",
+      "model": "InstanceRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/instances/{id}/{action}",
+      "fixture": "instance_action.json",
+      "model": "InstanceRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/instances/stop-all",
+      "fixture": "instances_stopped.json",
+      "model": "InstanceRecord[]"
+    },
+    {
+      "method": "GET",
+      "path": "/instances/{id}/logs",
+      "fixture": "instance_logs.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/instances/{id}/files",
+      "fixture": "files_list.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/instances/{id}/files/size",
+      "fixture": "files_size.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/instances/{id}/files/fetch",
+      "fixture": "export_record.json",
+      "model": "ExportRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/instances/{id}/files/put",
+      "fixture": "files_put.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/exports",
+      "fixture": "exports.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/exports/{id}",
+      "fixture": "export.json",
+      "model": "ExportRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/exports/{id}/restore",
+      "fixture": "export_restored.json",
+      "model": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/exports/{id}",
+      "fixture": "export_deleted.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/instances/{id}/terminal",
+      "fixture": "instance_terminal.json",
+      "model": "TerminalLaunch"
+    },
+    {
+      "method": "POST",
+      "path": "/instances/{id}/display",
+      "fixture": "instance_display.json",
+      "model": "TunnelRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/instances/{id}/forward",
+      "fixture": "instance_forward.json",
+      "model": "TunnelRecord"
+    },
+    {
+      "method": "GET",
+      "path": "/tunnels",
+      "fixture": "tunnels.json",
+      "model": "TunnelRecord[]"
+    },
+    {
+      "method": "DELETE",
+      "path": "/tunnels/{id}",
+      "fixture": "tunnel_closed.json",
+      "model": "TunnelRecord"
+    },
+    {
+      "method": "GET",
+      "path": "/jobs",
+      "fixture": "jobs.json",
+      "model": "JobRecord[]"
+    },
+    {
+      "method": "GET",
+      "path": "/jobs/{id}",
+      "fixture": "job.json",
+      "model": "JobRecord"
+    },
+    {
+      "method": "GET",
+      "path": "/jobs",
+      "query": {
+        "active": "1"
+      },
+      "fixture": "jobs_active.json",
+      "model": "JobRecord[]"
+    },
+    {
+      "method": "POST",
+      "path": "/jobs",
+      "fixture": "job_created.json",
+      "model": "JobRecord"
+    },
+    {
+      "method": "POST",
+      "path": "/jobs/clear-finished",
+      "fixture": "jobs_cleared.json",
+      "model": null
+    },
+    {
+      "method": "DELETE",
+      "path": "/jobs/{id}",
+      "fixture": "job_deleted.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/jobs/{id}/cancel",
+      "fixture": "job_cancelled.json",
+      "model": "JobRecord"
+    },
+    {
+      "method": "GET",
+      "path": "/jobs/{id}/output",
+      "fixture": "job_output.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/jobs/{id}/terminal",
+      "fixture": "job_terminal.json",
+      "model": "TerminalLaunch"
+    },
+    {
+      "method": "GET",
+      "path": "/agents",
+      "fixture": "agents.json",
+      "model": "AgentRun[]"
+    },
+    {
+      "method": "GET",
+      "path": "/agents/{id}",
+      "fixture": "agent.json",
+      "model": "AgentRun"
+    },
+    {
+      "method": "POST",
+      "path": "/agents",
+      "fixture": "agent_created.json",
+      "model": "AgentRun"
+    },
+    {
+      "method": "POST",
+      "path": "/agents/{id}/collect",
+      "fixture": "agent_collect.json",
+      "model": "CollectResult"
+    },
+    {
+      "method": "POST",
+      "path": "/agents/{id}/stop",
+      "fixture": "agent_stopped.json",
+      "model": "AgentRun"
+    },
+    {
+      "method": "POST",
+      "path": "/agents/{id}/message",
+      "fixture": "agent_message.json",
+      "model": "AgentRun"
+    },
+    {
+      "method": "POST",
+      "path": "/agents/{id}/rerun",
+      "fixture": "agent_rerun.json",
+      "model": "AgentRun"
+    },
+    {
+      "method": "DELETE",
+      "path": "/agents/{id}",
+      "fixture": "agent_removed.json",
+      "model": null
+    },
+    {
+      "method": "GET",
+      "path": "/agent-models",
+      "fixture": "agent_models.json",
+      "model": null
+    },
+    {
+      "method": "POST",
+      "path": "/agent-models",
+      "fixture": "agent_model_saved.json",
+      "model": null
+    }
+  ]
+}

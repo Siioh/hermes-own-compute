@@ -1,0 +1,64 @@
+{
+  "spec": {
+    "id": "devbox",
+    "name": "devbox",
+    "kind": "ssh",
+    "address": "devbox.local",
+    "user": "dev",
+    "port": 22,
+    "identity_file": null,
+    "jump_host": null,
+    "runtime_pref": "auto",
+    "exec_prefix": [],
+    "interactive_prefix": [],
+    "slurm": null,
+    "ec2": null,
+    "limits": {
+      "max_instances": 4,
+      "max_cpus": null,
+      "max_memory_gb": null,
+      "allow_agents": false
+    },
+    "created_at": "2026-11-08T14:31:00Z"
+  },
+  "state": {
+    "host_id": "devbox",
+    "status": "online",
+    "last_seen": "2026-11-08T14:30:00Z",
+    "last_error": null,
+    "latency_ms": 3.4,
+    "capabilities": {
+      "os": "Fedora Linux 43",
+      "arch": "x86_64",
+      "runtime": "podman",
+      "runtime_version": "5.8.0",
+      "rootless": true,
+      "containers": true,
+      "batch_jobs": false,
+      "interactive_terminal": true,
+      "port_forward": true,
+      "display": "buildable",
+      "display_reason": "Runtime present; the display image can be built.",
+      "gpus": [],
+      "scheduler": null,
+      "scheduler_version": null,
+      "apptainer_version": null,
+      "partitions": [],
+      "workdir_shared": null,
+      "workdir_detail": ""
+    },
+    "resources": {
+      "cpu_total": 4,
+      "cpu_used": 0.1,
+      "mem_total_mb": 7936,
+      "mem_used_mb": 900,
+      "disk_path": "/home/dev",
+      "disk_total_gb": 476.9,
+      "disk_free_gb": 212.4,
+      "gpus": [],
+      "source": "host",
+      "sampled_at": "2026-11-08T14:30:00Z"
+    },
+    "probed_at": "2026-11-08T14:30:00Z"
+  }
+}

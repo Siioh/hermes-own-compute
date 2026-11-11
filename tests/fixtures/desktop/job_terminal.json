@@ -1,0 +1,7 @@
+{
+  "launched": true,
+  "method": "wt",
+  "command_preview": "ssh -t x1carbon podman exec -it slurmctld srun --jobid=42 --overlap --pty bash",
+  "copy_command": "ssh -t x1carbon podman exec -it slurmctld srun --jobid=42 --overlap --pty bash",
+  "error": null
+}

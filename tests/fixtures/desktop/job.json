@@ -1,0 +1,17 @@
+{
+  "id": "j-1a2b3c4d",
+  "host_id": "slurm-x1",
+  "slurm_job_id": "42",
+  "name": "train-small",
+  "state": "RUNNING",
+  "partition": "debug",
+  "nodes": "c1",
+  "submitted_at": "2026-11-08T13:45:00Z",
+  "started_at": "2026-11-08T13:45:08Z",
+  "ended_at": null,
+  "exit_code": null,
+  "job_dir": "/data/cloud-compute/jobs/j-1a2b3c4d",
+  "image": "docker://python:3.12-slim",
+  "session_id": null,
+  "notified": false
+}

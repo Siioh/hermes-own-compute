@@ -1,0 +1,191 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOnlyDescribeCannotBeTagScoped",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeRegions",
+        "ec2:DescribeImages",
+        "ec2:DescribeInstanceTypes",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceStatus",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeKeyPairs",
+        "ec2:DescribeSecurityGroups"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
+      "Sid": "PublicAmiParameters",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": [
+        "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/*",
+        "arn:aws:ssm:us-east-1::parameter/aws/service/canonical/ubuntu/*"
+      ]
+    },
+    {
+      "Sid": "LaunchOnlySmallTypesWithTag",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:us-east-1:*:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "ec2:InstanceType": [
+            "t3.micro",
+            "t3.small"
+          ]
+        },
+        "Null": {
+          "aws:RequestTag/cloud-compute:install": "false"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchTaggedSmallVolume",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:us-east-1:*:volume/*",
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/cloud-compute:install": "false"
+        },
+        "NumericLessThanEquals": {
+          "ec2:VolumeSize": "30"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchUsesThesePieces",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": [
+        "arn:aws:ec2:us-east-1::image/*",
+        "arn:aws:ec2:us-east-1:*:subnet/*",
+        "arn:aws:ec2:us-east-1:*:network-interface/*",
+        "arn:aws:ec2:us-east-1:*:security-group/*",
+        "arn:aws:ec2:us-east-1:*:key-pair/*"
+      ]
+    },
+    {
+      "Sid": "TagsOnlyWhileCreating",
+      "Effect": "Allow",
+      "Action": "ec2:CreateTags",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "ec2:CreateAction": [
+            "RunInstances",
+            "CreateSecurityGroup",
+            "ImportKeyPair"
+          ],
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
+      "Sid": "LifecycleOnlyOnTaggedInstances",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "ec2:TerminateInstances",
+        "ec2:GetConsoleOutput"
+      ],
+      "Resource": "arn:aws:ec2:us-east-1:*:instance/*",
+      "Condition": {
+        "Null": {
+          "aws:ResourceTag/cloud-compute:install": "false"
+        }
+      }
+    },
+    {
+      "Sid": "KeyPairCreateTagged",
+      "Effect": "Allow",
+      "Action": "ec2:ImportKeyPair",
+      "Resource": "arn:aws:ec2:us-east-1:*:key-pair/*",
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/cloud-compute:install": "false"
+        }
+      }
+    },
+    {
+      "Sid": "KeyPairDeleteTagged",
+      "Effect": "Allow",
+      "Action": "ec2:DeleteKeyPair",
+      "Resource": "arn:aws:ec2:us-east-1:*:key-pair/*",
+      "Condition": {
+        "Null": {
+          "aws:ResourceTag/cloud-compute:install": "false"
+        }
+      }
+    },
+    {
+      "Sid": "SecurityGroupCreateTagged",
+      "Effect": "Allow",
+      "Action": "ec2:CreateSecurityGroup",
+      "Resource": "arn:aws:ec2:us-east-1:*:security-group/*",
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/cloud-compute:install": "false"
+        }
+      }
+    },
+    {
+      "Sid": "SecurityGroupInVpc",
+      "Effect": "Allow",
+      "Action": "ec2:CreateSecurityGroup",
+      "Resource": "arn:aws:ec2:us-east-1:*:vpc/*"
+    },
+    {
+      "Sid": "SecurityGroupChangeTagged",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:DeleteSecurityGroup"
+      ],
+      "Resource": "arn:aws:ec2:us-east-1:*:security-group/*",
+      "Condition": {
+        "Null": {
+          "aws:ResourceTag/cloud-compute:install": "false"
+        }
+      }
+    },
+    {
+      "Sid": "DenyOtherInstanceTypes",
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "StringNotEquals": {
+          "ec2:InstanceType": [
+            "t3.micro",
+            "t3.small"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "DenyOtherRegions",
+      "Effect": "Deny",
+      "NotAction": [
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    }
+  ]
+}

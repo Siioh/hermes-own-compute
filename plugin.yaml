@@ -1,0 +1,140 @@
+manifest_version: 2
+api_version: 1
+name: cloud-compute
+version: "0.1.0"
+description: "Bring your own compute: Hermes sandboxes, Slurm jobs and agents on machines you already have (SSH hosts, Slurm login nodes, local Docker/Podman, EC2 in your AWS account), with a Desktop page, terminals, remote screens and chat tools. It runs commands on your SSH/Slurm hosts in containers, opens local SSH tunnels, starts remote compute (billed AWS EC2 instances) after your approval, cost on the card, and runs a background loop."
+author: Tyler Ramsarran
+license: MIT
+kind: standalone
+label: Own Compute
+requires_hermes: ">=0.23.0"
+# Every tool register() may register. Tools of feature modules that are not installed are
+# not registered; a tool missing from this list is never registered.
+provides_tools: [compute_status, env_spawn, env_exec, env_control, env_open, slurm_submit, slurm_jobs, cloud_agent_spawn, cloud_agent_status, cloud_agent_collect, cloud_agent_stop, env_files, compute_host, cloud_agent_message, cloud_agent_rerun]
+provides_hooks: [pre_llm_call, pre_tool_call]
+# No privileged surfaces: no tool override, no LLM overrides, no platform actions.
+capabilities: []
+optional_env:
+  - name: CC_AGENT_API_KEY
+    description: "Spend-capped model key used only inside cloud-agent sandboxes"
+    secret: true
+  - name: HF_TOKEN
+    description: "Optional Hugging Face token passed into sandboxes that use the HF_TOKEN variable"
+    secret: true
+  - name: AWS_ACCESS_KEY_ID
+    description: "EC2 hosts only: access key id of an IAM user made for this plugin (never the root user)"
+    secret: true
+  - name: AWS_SECRET_ACCESS_KEY
+    description: "EC2 hosts only: the secret half of that IAM user's key"
+    secret: true
+  - name: AWS_SESSION_TOKEN
+    description: "EC2 hosts only, optional: session token when the key is temporary"
+    secret: true
+# Settings under plugins.entries.cloud-compute.settings (mirrors core/config.py CONFIG_FIELDS).
+config_schema:
+  liveness_seconds:
+    type: int
+    default: 15
+    min: 5
+    max: 3600
+    description: "Seconds between quick reachability checks of each host (5-3600)."
+  poll_seconds:
+    type: int
+    default: 60
+    min: 30
+    max: 3600
+    description: "Seconds between full status polls of instances, jobs and resources (30-3600)."
+  tunnel_ttl_minutes:
+    type: int
+    default: 60
+    min: 5
+    max: 1440
+    description: "Minutes before an idle SSH tunnel is closed (5-1440)."
+  default_terminal:
+    type: str
+    default: "auto"
+    choices: [auto, wt, cmd, macos, linux, copy]
+    description: "How to open a terminal on this computer. auto (recommended) picks the usual terminal for this operating system. wt and cmd are for Windows, macos is for macOS and linux is for Linux; a value meant for another system behaves like auto. copy only puts the command on the clipboard."
+  default_idle_minutes:
+    type: int
+    default: 60
+    min: 5
+    max: 1440
+    description: "Default idle timeout for new environments and cloud agents, in minutes (5-1440). A template or request can override it."
+  default_ttl_minutes:
+    type: int
+    default: 240
+    min: 5
+    max: 10080
+    description: "Default maximum lifetime for new environments and cloud agents, in minutes (5-10080). A template or request can override it. A lower value is raised to 5."
+  chat_context:
+    type: bool
+    default: true
+    description: "Tell the model which compute environments are online."
+  chat_context_max_chars:
+    type: int
+    default: 600
+    min: 100
+    max: 4000
+    description: "Maximum size of the environment summary added to chat context, in characters (100-4000)."
+  approval:
+    type: str
+    default: "always"
+    choices: [always, remote-only]
+    description: "When model-initiated actions need your approval."
+  notify_job_complete:
+    type: bool
+    default: true
+    description: "Show a notification when a Slurm job finishes."
+  ssh_path:
+    type: str
+    default: ""
+    description: "Path to the ssh executable; empty uses the one on PATH."
+  use_asyncssh:
+    type: bool
+    default: false
+    description: "Use the asyncssh library instead of the ssh executable when installed."
+  expiry_warning_minutes:
+    type: int
+    default: 15
+    min: 0
+    max: 1440
+    description: "Warn this many minutes before an environment reaches its time limit (0-1440). 0 = no warning."
+  auto_delete_days:
+    type: int
+    default: 0
+    min: 0
+    max: 365
+    description: "Delete environments that have been stopped for this many days (0-365). Their files are saved to this computer first. 0 = never delete automatically."
+  export_max_mb:
+    type: int
+    default: 2048
+    min: 10
+    max: 102400
+    description: "Largest file export, in MB, when saving an environment's files to this computer (10-102400)."
+  exports_dir:
+    type: str
+    default: ""
+    description: "Folder on this computer for saved copies of environment files. Empty uses the plugin's own data folder."
+  agent_base_url:
+    type: str
+    default: ""
+    label: "Cloud agent model endpoint"
+    description: "OpenAI-compatible base URL for cloud agents, e.g. https://llm.example.net/v1 (plain http only on a private network you trust). Used when the agent template sets none."
+  agent_model:
+    type: str
+    default: ""
+    label: "Cloud agent model"
+    description: "Model id cloud agents use. Used when the agent template sets none."
+  wait_max_seconds:
+    type: int
+    default: 300
+    min: 10
+    max: 1800
+    description: "Longest time a chat tool waits for a job or a cloud agent run to finish before returning (10-1800)."
+  agent_api_key:
+    type: secret
+    default: ""
+    env: CC_AGENT_API_KEY
+    label: "Cloud agent model key"
+    description: "Key for the default cloud-agent model, saved as the secret CC_AGENT_API_KEY in this Hermes profile. Sent only into cloud-agent sandboxes, after you approve the run. Use a scoped, spend-capped key."

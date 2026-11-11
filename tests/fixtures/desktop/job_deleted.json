@@ -1,0 +1,6 @@
+{
+  "deleted": "j-99aa11bb",
+  "host_id": "slurm-x1",
+  "job_dir": "/data/cloud-compute/jobs/j-99aa11bb",
+  "note": "Removed job j-99aa11bb from this computer's job list only. Its folder /data/cloud-compute/jobs/j-99aa11bb on slurm-x1 was not deleted."
+}

@@ -1,0 +1,9 @@
+{
+  "run_id": "a-5e6f7a8b",
+  "ref": "refs/heads/cloud/a-5e6f7a8b/cloud/write-readme",
+  "commits_ahead": 1,
+  "worktree_path": null,
+  "diverged": true,
+  "conflicts_dry_run": [],
+  "message": "refs/heads/cloud/a-5e6f7a8b/cloud/write-readme has commits that are not in the sandbox result, and the sandbox result has commits that are not in it, so nothing was changed. The sandbox commits are kept as refs/cloud-compute/incoming/heads/cloud/a-5e6f7a8b/cloud/write-readme to compare or merge."
+}

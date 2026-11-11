@@ -1,0 +1,12 @@
+[
+  "goal",
+  "host_id",
+  "repo_path",
+  "branch",
+  "new_branch",
+  "base",
+  "template",
+  "max_turns",
+  "model_id",
+  "criteria"
+]
