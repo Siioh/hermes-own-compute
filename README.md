@@ -246,6 +246,10 @@ More cases (terminal does not open, screen is blank, port forward fails, environ
 
 [docs/README.md](docs/README.md) indexes the guides: [hosts](docs/hosts.md), [EC2](docs/ec2.md), [cloud agents](docs/cloud-agents.md), [safety](docs/safety.md), [settings](docs/settings.md), [troubleshooting](docs/troubleshooting.md). The same topics are in the Help tab of the Compute page.
 
+## White paper
+
+The Case for User-Controlled Cloud Agents, a short paper on why agents need compute their users control, is in a separate repository: [own-compute-paper](https://github.com/Siioh/own-compute-paper) ([PDF](https://github.com/Siioh/own-compute-paper/blob/main/own-compute-white-paper.pdf)). It argues the need; this README documents the plugin.
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Author: Tyler Ramsarran.
