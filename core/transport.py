@@ -63,33 +63,88 @@ log = logging.getLogger(__name__)
 #: Allowed characters for host addresses, users, jump hosts and container ids.
 SAFE_TOKEN = re.compile(r"^[A-Za-z0-9_.@:/=+-]+$")
 
-#: Names (case-insensitive) of variables that hold secrets and must not reach a child process.
-_SECRET_ENV_NAME = re.compile(
-    r"(?:(?:^|_)(?:API_?KEY|TOKEN|PAT|PASSWD)$)|SECRET|PASSWORD", re.IGNORECASE)
-_SECRET_ENV_EXACT = frozenset({"CC_AGENT_API_KEY", "LLAMA_SWAP_API_KEY", "HF_TOKEN"})
-#: Never stripped, even if a future pattern would match: what ssh and the OS need to work.
-_KEEP_ENV = frozenset({"PATH", "HOME", "USERPROFILE", "SYSTEMROOT", "TEMP", "TMP",
-                       "SSH_AUTH_SOCK", "SSH_AGENT_PID"})
+#: The only variables a local child process gets, plus every ``LC_*`` locale variable. Names
+#: match exactly, except that Windows ignores ASCII case (see :func:`env_name_allowed`).
+CHILD_ENV_NAMES = frozenset({"PATH", "HOME", "USERPROFILE", "SYSTEMROOT", "TEMP", "TMP", "LANG",
+                             "SSH_AUTH_SOCK", "SSH_AGENT_PID"})
+#: Windows only: OpenSSH for Windows (``ssh``, ``ssh-keygen``) reads its system configuration
+#: from ``%PROGRAMDATA%\ssh`` and exits with code 255, printing nothing, when the variable is
+#: missing. The value is a folder path (``C:\ProgramData``).
+#: ``PROGRAMFILES``: without it the Docker Desktop CLI does not find its plugins in
+#: ``%ProgramFiles%\Docker\cli-plugins``, so ``docker buildx`` is an unknown command and
+#: ``docker build`` falls back to the legacy builder. The value is a folder path too.
+CHILD_ENV_NAMES_WINDOWS = frozenset({"PROGRAMDATA", "PROGRAMFILES"})
+#: Added for terminal windows (and the browser): how a window reaches the desktop session.
+TERMINAL_ENV_NAMES = frozenset({"DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR",
+                                "DBUS_SESSION_BUS_ADDRESS"})
+#: Added for terminal windows outside Windows: the path of the X11 authority file. An X11
+#: client reads only ``$XAUTHORITY`` or ``~/.Xauthority``; a desktop that keeps the file
+#: elsewhere refuses a terminal started without it.
+TERMINAL_ENV_NAMES_POSIX = frozenset({"XAUTHORITY"})
+#: Added for terminal windows and the browser on Windows. The values are a drive letter
+#: (``C:``) and a folder path (``C:\Users\<name>\AppData\Local``).
+#: ``SYSTEMDRIVE``: without it Windows Terminal cannot find its settings, shows "Failed to
+#: load settings" and starts with its default profile, colours and fonts.
+#: ``LOCALAPPDATA``: without it the browser starts as a new instance with an empty profile in
+#: the temp folder instead of opening the address in the user's running browser.
+TERMINAL_ENV_NAMES_WINDOWS = frozenset({"SYSTEMDRIVE", "LOCALAPPDATA"})
 
 
-def child_env(base: "dict[str, str] | None" = None) -> dict[str, str]:
-    """A copy of the environment for a local child process, without secret-looking variables.
+#: A name that may be passed at all: plain ASCII letters, digits and underscores.
+_ENV_NAME = re.compile(r"[A-Za-z0-9_]+")
 
-    Drops names such as ``*_API_KEY``, ``*_TOKEN``, ``*_PAT``, ``*SECRET*``, ``*PASSWORD*``,
-    ``CC_AGENT_API_KEY``, ``LLAMA_SWAP_API_KEY`` and ``HF_TOKEN``, so the gateway's keys never
-    reach ssh, podman, docker, terminal windows or the process-listing tools. Everything else
-    (``PATH``, ``HOME``, ``SSH_AUTH_SOCK``, the Windows system variables, ...) is kept, so ssh
-    and its agent keep working. ``base`` defaults to ``os.environ``.
+
+def env_name_allowed(name: str, *, terminal: bool = False) -> bool:
+    """True if a variable called ``name`` may reach a local child process.
+
+    ``terminal`` widens the list for terminal windows and the browser. Only names made of
+    ASCII letters, digits and underscores qualify. On Windows, where variable names ignore
+    case, ASCII case is ignored (``Path``, ``SystemRoot``); elsewhere the spelling must match
+    exactly (``PATH``, not ``path``). ``LC_`` must be followed by at least one character.
+    """
+    if not isinstance(name, str) or not _ENV_NAME.fullmatch(name):
+        return False
+    windows = _is_windows()
+    key = name.upper() if windows else name       # ASCII only here, so upper() is ASCII too
+    if key in CHILD_ENV_NAMES or (key.startswith("LC_") and len(key) > 3):
+        return True
+    if windows and key in CHILD_ENV_NAMES_WINDOWS:
+        return True
+    if terminal:
+        return key in TERMINAL_ENV_NAMES or key in (
+            TERMINAL_ENV_NAMES_WINDOWS if windows else TERMINAL_ENV_NAMES_POSIX)
+    return False
+
+
+def _allowed_entries(src, *, terminal: bool, windows: bool) -> dict[str, tuple[str, str]]:
+    """Allowed entries of ``src`` by name. On Windows, where ``Path`` and ``PATH`` are one
+    variable, the spelling that sorts first wins (``PATH`` before ``Path`` before ``path``)."""
+    out: dict[str, tuple[str, str]] = {}
+    for name in sorted(n for n in src if env_name_allowed(n, terminal=terminal)):
+        out.setdefault(name.upper() if windows else name, (name, src[name]))
+    return out
+
+
+def child_env(base: "dict[str, str] | None" = None, *, terminal: bool = False,
+              extra: "dict[str, str] | None" = None) -> dict[str, str]:
+    """The environment for a local child process: allowlisted variables only.
+
+    Copies from ``base`` (default ``os.environ``) only the variables named in
+    :data:`CHILD_ENV_NAMES` and ``LC_*``, plus :data:`CHILD_ENV_NAMES_WINDOWS` on Windows.
+    Every other variable is left out, whatever its name or value, so API keys, tokens, proxy
+    settings and anything else in the gateway's environment never reach ssh, podman, docker,
+    ``ssh-keygen`` or the process-listing tools. ``terminal=True`` (terminal windows, the
+    browser) also passes :data:`TERMINAL_ENV_NAMES`, plus :data:`TERMINAL_ENV_NAMES_WINDOWS` on
+    Windows and :data:`TERMINAL_ENV_NAMES_POSIX` elsewhere.
+    ``extra`` holds values set for this child (for example a desktop session found for a
+    terminal); they replace inherited ones and pass through the same list. On Windows the
+    result holds one spelling per name (see :func:`_allowed_entries`).
     """
     src = os.environ if base is None else base
-    out: dict[str, str] = {}
-    for name, value in src.items():
-        upper = name.upper()
-        if upper not in _KEEP_ENV and (upper in _SECRET_ENV_EXACT
-                                       or _SECRET_ENV_NAME.search(name)):
-            continue
-        out[name] = value
-    return out
+    windows = _is_windows()
+    picked = _allowed_entries(src, terminal=terminal, windows=windows)
+    picked.update(_allowed_entries(extra or {}, terminal=terminal, windows=windows))
+    return dict(picked.values())
 
 
 #: Local port-forward spec accepted by ``local_argv``: must bind the loopback address.
@@ -418,8 +473,8 @@ def _run_process(argv: list[str], stdin: bytes | None, timeout: float,
 
     stdout and stderr are read while the command runs and only ``max_bytes`` of each
     are kept (head and tail; the middle is replaced by an "omitted" marker). On a
-    timeout the whole process tree is killed. ``env`` replaces the filtered default
-    environment (:func:`child_env`) when given.
+    timeout the whole process tree is killed. ``env`` (default ``os.environ``) is reduced
+    to the allowlisted variables by :func:`child_env`.
     """
     start = time.monotonic()
     kwargs: dict[str, Any] = {}
@@ -432,7 +487,7 @@ def _run_process(argv: list[str], stdin: bytes | None, timeout: float,
             argv,
             stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=child_env() if env is None else env, **kwargs,
+            env=child_env(env), **kwargs,
         )
     except OSError as exc:  # includes FileNotFoundError / PermissionError
         return ExecResult(rc=RC_NOT_FOUND, stdout="",
@@ -553,7 +608,7 @@ def _run_stream_process(argv: list[str], *, sink: Any = None, source: Any = None
         proc = subprocess.Popen(
             argv, stdin=subprocess.PIPE if source is not None else subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=child_env() if env is None else env, **kwargs)
+            env=child_env(env), **kwargs)
     except OSError as exc:
         return StreamResult(rc=RC_NOT_FOUND, stderr=f"could not start {argv[0] if argv else '?'}: "
                             f"{exc}", bytes=0, duration_s=time.monotonic() - start)
@@ -1035,7 +1090,9 @@ class _ConnectFailed(Exception):
 class AsyncSSHTransport:
     """Keeps one SSH connection per host open with ``asyncssh`` (optional, faster).
 
-    Uses ``~/.ssh/config`` and the default keys / agent like the ssh client. If the
+    Takes address, port, user and jump host from ``ssh -G`` (the SSH config as the ssh
+    client reads it) and uses the default keys / agent. A host whose config sets a
+    ``ProxyCommand`` is served by :class:`SubprocessSSHTransport`. If the
     connection cannot be established (unknown host key, auth method unsupported,
     library error), the call falls back to :class:`SubprocessSSHTransport`, which
     also records a new host key (``accept-new``) so a later connection can succeed.
@@ -1051,21 +1108,94 @@ class AsyncSSHTransport:
         self._conn: Any = None
         self._conn_lock: asyncio.Lock | None = None
         self._runner = _LoopThread.get()
+        self._settings: dict[str, Any] | None = None
+        self._settings_read = False
+        self._settings_lock = threading.Lock()
+        #: Which program serves this host, for the connection test ("" until the first run).
+        self.note = ""
+        self._async_note = ""      # what ``note`` says while asyncssh serves the host
 
     # -- connection -------------------------------------------------------
 
-    def _connect_kwargs(self) -> dict[str, Any]:
-        kw: dict[str, Any] = {"connect_timeout": 15, "keepalive_interval": 30}
-        cfg = Path.home() / ".ssh" / "config"
-        if cfg.is_file():
-            kw["config"] = [str(cfg)]
+    def _ssh_settings(self) -> dict[str, Any] | None:
+        """Address, port, user and jump host from the SSH config, read with ``ssh -G``.
+
+        asyncssh is given no SSH config file: while reading one it runs ``Match exec``
+        commands, and while connecting it starts a ``ProxyCommand``, both with the gateway's
+        full environment, and it sends the variables named by ``SendEnv`` from that
+        environment to the server. ``ssh -G`` runs as an allowlisted child instead. ``None``
+        means the ssh program serves this host: the config sets a ``ProxyCommand`` (which the
+        ssh program then starts with the allowlisted environment), the config limits which
+        keys are offered (``IdentitiesOnly`` or ``IdentityAgent``, which asyncssh would not
+        honour without the config), or ``ssh -G`` ran and failed. If there is no ssh program
+        on this computer (nothing exists at that path or under that name on PATH; anything
+        that exists but cannot be started counts as failed) there is no config to honour and
+        no child process to protect, so asyncssh is used with the host's own saved fields
+        (an empty dict). That result is
+        not remembered: it is looked up again on the next command, so installing the ssh
+        program later is noticed. Every other result is read once per transport;
+        :attr:`note` says which program is used.
+        """
+        with self._settings_lock:
+            if self._settings_read:
+                return self._settings
+        ssh_bin = self.fallback.ssh_bin       # the program the ssh path would run
+        res = _run_process([ssh_bin, "-G", self.host.address], None, SSH_G_TIMEOUT)
+        # Only a name that resolves to nothing counts as absent. Anything that exists (a file
+        # that cannot be started, a non-executable file, a directory, even a broken symlink)
+        # keeps the ssh program, which then shows its own error.
+        if (res.rc == RC_NOT_FOUND and res.stderr.startswith("could not start")
+                and shutil.which(ssh_bin, mode=os.F_OK) is None
+                and not os.path.lexists(ssh_bin)):
+            with self._settings_lock:
+                self._async_note = self.note = (
+                    "Uses asyncssh with only the host's saved fields, as no ssh "
+                    "program can be started on this computer")
+            return {}
+        cfg = _parse_ssh_g(res.stdout) if res.rc == 0 else {}
+        settings: dict[str, Any] | None = None
+        # The ssh program honours these two settings, also for a host with a saved key file
+        # (it is then run with ``-i <key> -o IdentitiesOnly=yes``); asyncssh does not read
+        # them, so a host whose config sets either one is served by the ssh program.
+        agent = cfg.get("identityagent", "").strip().lower()
+        limits_keys = (
+            cfg.get("identitiesonly", "no").lower() == "yes"
+            or agent not in ("", "ssh_auth_sock", "$ssh_auth_sock"))
+        if not cfg:
+            note = "Uses the ssh program: `ssh -G` could not read the SSH config"
+        elif cfg.get("proxycommand", "none").lower() != "none":
+            note = "Uses the ssh program, as the SSH config sets a ProxyCommand"
+        elif limits_keys:
+            note = "Uses the ssh program, as the SSH config limits which keys are offered"
+        else:
+            note = "Uses asyncssh"
+            settings = {"host": cfg.get("hostname") or self.host.address}
+            if cfg.get("port", "").isdigit():
+                settings["port"] = int(cfg["port"])
+            if cfg.get("user"):
+                settings["username"] = cfg["user"]
+            if cfg.get("proxyjump", "none").lower() != "none":
+                settings["tunnel"] = cfg["proxyjump"]
+        with self._settings_lock:
+            self._settings, self._settings_read, self.note = settings, True, note
+            if settings is not None:
+                self._async_note = note
+        return settings
+
+    def _connect_kwargs(self, settings: dict[str, Any] | None = None) -> dict[str, Any]:
+        # config=[]: asyncssh reads no SSH config file (see _ssh_settings).
+        # send_env=None: no local variable is sent to the server, whatever a config says.
+        kw: dict[str, Any] = {"connect_timeout": 15, "keepalive_interval": 30, "config": [],
+                              "send_env": None}
+        kw.update({k: v for k, v in (settings or {}).items() if k != "host"})
         if self.host.port != 22:
             kw["port"] = self.host.port
         if self.host.user:
             kw["username"] = self.host.user
         if self.host.identity_file:
             kw["client_keys"] = [self.host.identity_file]
-            kw["agent_path"] = None           # only that key, as IdentitiesOnly=yes for ssh
+            # Asks for no agent; on Windows asyncssh may still open the default one.
+            kw["agent_path"] = None
         if self.host.jump_host:
             kw["tunnel"] = self.host.jump_host
         return kw
@@ -1075,10 +1205,14 @@ class AsyncSSHTransport:
             self._conn_lock = asyncio.Lock()
         async with self._conn_lock:
             if self._conn is None:
+                settings = self._settings or {}
                 try:
-                    self._conn = await self._asyncssh.connect(self.host.address, **self._connect_kwargs())
+                    self._conn = await self._asyncssh.connect(
+                        settings.get("host") or self.host.address,
+                        **self._connect_kwargs(settings))
                 except Exception as exc:  # noqa: BLE001 - any connect failure falls back
                     raise _ConnectFailed(f"{type(exc).__name__}: {exc}") from exc
+                self.note = self._async_note       # asyncssh serves the host again
             return self._conn
 
     async def _run(self, command: str, stdin: bytes | None, timeout: float) -> ExecResult:
@@ -1115,12 +1249,16 @@ class AsyncSSHTransport:
         if not argv:
             raise ValueError("empty argv")
         validate_host(self.host)
+        if self._ssh_settings() is None:
+            return self.fallback.run(argv, stdin=stdin, timeout=timeout)
         command = shlex.join([str(a) for a in argv])
         future = self._runner.submit(self._run(command, stdin, timeout))
         try:
             return future.result(timeout + 20)
         except _ConnectFailed as exc:
             log.info("asyncssh connect to %s failed (%s); using ssh executable", self.host.address, exc)
+            # The ssh program serves this run; the connection test shows it.
+            self.note = "Uses the ssh program, as the asyncssh login failed"
             return self.fallback.run(argv, stdin=stdin, timeout=timeout)
         except concurrent.futures.TimeoutError:
             future.cancel()

@@ -516,6 +516,7 @@ class FakeRunResult:
 def make_fake_asyncssh(*, fail_connect=False, run=None):
     mod = types.SimpleNamespace()
     mod.connects = []
+    mod.fail_connect = fail_connect        # a test can change it between two commands
 
     class TimeoutError_(Exception):
         def __init__(self, stdout=b"", stderr=b""):
@@ -539,7 +540,7 @@ def make_fake_asyncssh(*, fail_connect=False, run=None):
 
     async def connect(address, **kwargs):
         mod.connects.append((address, kwargs))
-        if fail_connect:
+        if mod.fail_connect:
             raise OSError("host key not verifiable")
         mod.conn = Conn()
         return mod.conn
@@ -547,6 +548,183 @@ def make_fake_asyncssh(*, fail_connect=False, run=None):
     mod.connect = connect
     mod.TimeoutError = TimeoutError_
     return mod
+
+
+#: ``ssh -G x1carbon`` output for a host without a ProxyCommand.
+SSH_G_PLAIN = ("hostname 10.0.0.5\nuser dev\nport 22\nproxycommand none\n"
+               "sendenv LANG\nsendenv LC_*\nsetenv FOO=bar\n")
+
+
+@pytest.fixture
+def ssh_g(monkeypatch):
+    """Answers ``ssh -G`` with ``state.out``; every other process start runs as usual."""
+    state = types.SimpleNamespace(out=SSH_G_PLAIN, rc=0, stderr="", calls=[])
+    real = tr._run_process
+
+    def fake(argv, *a, **kw):
+        if argv[1:2] == ["-G"]:
+            state.calls.append(list(argv))
+            return ExecResult(rc=state.rc, stdout=state.out, stderr=state.stderr, duration_s=0.0)
+        return real(argv, *a, **kw)
+
+    monkeypatch.setattr(tr, "_run_process", fake)
+    return state
+
+
+def test_asyncssh_reads_no_ssh_config_and_sends_no_local_variables(ssh_g):
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0
+    address, kw = fake.connects[0]
+    # asyncssh gets no config file (it would run Match exec / ProxyCommand with the full
+    # environment) and send_env=None overrides any SendEnv; the config comes from ssh -G.
+    assert kw["config"] == [] and kw["send_env"] is None
+    assert address == "10.0.0.5" and kw["username"] == "dev" and "tunnel" not in kw
+    assert ssh_g.calls == [[SSH, "-G", "x1carbon"]]
+    assert t.note == "Uses asyncssh"
+    t.run(["true"])
+    assert len(ssh_g.calls) == 1                     # read once per transport
+
+
+def test_asyncssh_takes_the_jump_host_from_ssh_g_and_the_host_fields_win(ssh_g):
+    ssh_g.out = "hostname box\nport 2200\nuser cfg\nproxyjump gw.example\nproxycommand none\n"
+    fake = make_fake_asyncssh()
+    tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake).run(["true"])
+    _, kw = fake.connects[0]
+    assert (kw["port"], kw["username"], kw["tunnel"]) == (2200, "cfg", "gw.example")
+    fake = make_fake_asyncssh()
+    tr.AsyncSSHTransport(host(user="me", port=2222, jump_host="j"), SSH,
+                         asyncssh_module=fake).run(["true"])
+    _, kw = fake.connects[0]
+    assert (kw["port"], kw["username"], kw["tunnel"]) == (2222, "me", "j")
+
+
+@pytest.mark.parametrize("out, rc, why", [
+    ("hostname box\nproxycommand cloudflared access ssh --hostname %h\n", 0, "ProxyCommand"),
+    ("", 255, "could not read"),
+])
+def test_asyncssh_leaves_a_proxy_command_host_to_the_ssh_program(ssh_g, popen, out, rc, why):
+    ssh_g.out, ssh_g.rc = out, rc
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
+    res = t.run(["true"])
+    assert res.rc == 0 and fake.connects == []       # asyncssh never connected
+    assert popen.calls[0][0][0] == SSH and popen.calls[0][0][-3:] == ["x1carbon", "--", "true"]
+    assert "ssh program" in t.note and why in t.note
+
+
+@pytest.mark.parametrize("line", [
+    "identitiesonly yes",
+    "identityagent none",
+    "identityagent ~/.1password/agent.sock",
+    r"identityagent \\.\pipe\openssh-ssh-agent",
+])
+def test_asyncssh_leaves_a_key_limiting_host_to_the_ssh_program(ssh_g, popen, line):
+    ssh_g.out = "hostname box\nproxycommand none\nidentityfile ~/.ssh/id_ed25519\n" + line + "\n"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and fake.connects == []     # asyncssh never connected
+    assert popen.calls[0][0][0] == SSH
+    assert t.note == "Uses the ssh program, as the SSH config limits which keys are offered"
+
+
+@pytest.mark.parametrize("line", [
+    "identitiesonly no", "identityagent SSH_AUTH_SOCK", "identityagent $SSH_AUTH_SOCK",
+])
+def test_asyncssh_stays_in_use_for_the_default_key_settings(ssh_g, line):
+    ssh_g.out = "hostname box\nproxycommand none\nidentityfile ~/.ssh/id_ed25519\n" + line + "\n"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and len(fake.connects) == 1
+    assert t.note == "Uses asyncssh"
+
+
+def test_a_host_with_a_saved_key_and_key_limiting_config_uses_the_ssh_program(ssh_g, popen):
+    # asyncssh may still open the default agent on Windows, so the ssh program (which gets
+    # -i <key> -o IdentitiesOnly=yes) serves the host whenever the config limits the keys.
+    ssh_g.out = "hostname box\nproxycommand none\nidentitiesonly yes\nidentityagent none\n"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(identity_file=r"C:\k\id"), SSH, asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and fake.connects == []     # asyncssh never connected
+    argv = popen.calls[0][0]
+    assert argv[0] == SSH and "-i" in argv and "IdentitiesOnly=yes" in argv
+    assert t.note == "Uses the ssh program, as the SSH config limits which keys are offered"
+
+
+def test_asyncssh_works_when_no_ssh_program_can_be_started():
+    # A program that does not exist anywhere: no ssh -G, no config, no child.
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(user="me"), "no-such-ssh-program-for-the-test",
+                             asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0
+    address, kw = fake.connects[0]
+    assert address == "x1carbon" and kw["username"] == "me"
+    assert kw["config"] == [] and kw["send_env"] is None and "tunnel" not in kw
+    assert t.note == ("Uses asyncssh with only the host's saved fields, as no ssh program "
+                      "can be started on this computer")
+
+
+def test_asyncssh_uses_the_ssh_program_that_exists_but_cannot_be_started(ssh_g, popen,
+                                                                         tmp_path):
+    # The file is there (permission, policy or resource limit stopped it): the user's SSH
+    # config still applies, so the ssh program serves the host and shows its own error.
+    present = tmp_path / "ssh.exe"
+    present.write_text("")
+    ssh_g.rc, ssh_g.out = 127, ""
+    ssh_g.stderr = "could not start ssh: [WinError 5] access denied"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), str(present), asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and fake.connects == []     # asyncssh never connected
+    assert popen.calls[0][0][0] == str(present)
+    assert "ssh program" in t.note
+
+
+def test_asyncssh_uses_the_ssh_program_when_ssh_path_is_a_directory(ssh_g, popen, tmp_path):
+    # Something exists at the configured path (here a mis-set directory): it cannot be
+    # started, but the user's SSH config still applies, so asyncssh must not take over.
+    ssh_g.rc, ssh_g.out = 127, ""
+    ssh_g.stderr = "could not start ssh: [WinError 5] access denied"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), str(tmp_path), asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and fake.connects == []     # asyncssh never connected
+    assert popen.calls[0][0][0] == str(tmp_path)
+    assert "ssh program" in t.note and "no ssh program can be started" not in t.note
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
+def test_asyncssh_uses_the_ssh_program_when_ssh_on_path_is_not_executable(
+        ssh_g, popen, tmp_path, monkeypatch):
+    bindir, elsewhere = tmp_path / "bin", tmp_path / "cwd"
+    bindir.mkdir()
+    elsewhere.mkdir()
+    (bindir / "ssh").write_text("")
+    (bindir / "ssh").chmod(0o644)
+    monkeypatch.setenv("PATH", str(bindir))
+    monkeypatch.chdir(elsewhere)
+    ssh_g.rc, ssh_g.out = 127, ""
+    ssh_g.stderr = "could not start ssh: [Errno 13] Permission denied"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), "ssh", asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and fake.connects == []     # asyncssh never connected
+    assert popen.calls[0][0][0] == "ssh"
+    assert "no ssh program can be started" not in t.note
+
+
+def test_asyncssh_looks_for_the_ssh_program_again_after_it_was_missing(ssh_g, popen):
+    # Not remembered: once ssh -G can run, its answer is used (here a ProxyCommand host).
+    # SSH is not an existing file, so the program is absent.
+    ssh_g.rc, ssh_g.out = 127, ""
+    ssh_g.stderr = "could not start ssh: [WinError 2] not found"
+    fake = make_fake_asyncssh()
+    t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
+    t.run(["true"])
+    assert len(fake.connects) == 1 and len(ssh_g.calls) == 1
+    ssh_g.rc, ssh_g.stderr, ssh_g.out = 0, "", "hostname box\nproxycommand nc %h %p\n"
+    t.run(["true"])
+    assert len(ssh_g.calls) == 2 and len(fake.connects) == 1     # now the ssh program serves it
+    assert "ProxyCommand" in t.note
+    t.run(["true"])
+    assert len(ssh_g.calls) == 2                                  # that answer is remembered
 
 
 def test_factory_falls_back_without_asyncssh(monkeypatch):
@@ -565,7 +743,8 @@ def test_asyncssh_disabled_by_default(monkeypatch):
     assert type(tr.TransportFactory(Config()).for_host(host())) is tr.SubprocessSSHTransport
 
 
-def test_asyncssh_reuses_one_connection(monkeypatch, popen):
+def test_asyncssh_reuses_one_connection(monkeypatch, popen, ssh_g):
+    ssh_g.out = "hostname x1carbon\nproxycommand none\n"
     fake = make_fake_asyncssh()
     monkeypatch.setattr(tr, "_import_asyncssh", lambda: fake)
     f = tr.TransportFactory(Config(use_asyncssh=True))
@@ -592,14 +771,24 @@ def test_asyncssh_reuses_one_connection(monkeypatch, popen):
     assert fake.conn.closed
 
 
-def test_asyncssh_connect_failure_falls_back_to_subprocess(monkeypatch, popen):
+def test_asyncssh_connect_failure_falls_back_to_subprocess(monkeypatch, popen, ssh_g):
     fake = make_fake_asyncssh(fail_connect=True)
     t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
     res = t.run(["true"])
     assert res.rc == 0 and popen.calls[0][0][-3:] == ["x1carbon", "--", "true"]
 
 
-def test_asyncssh_timeout_and_exit_codes(monkeypatch):
+def test_asyncssh_note_names_the_program_that_served_the_last_run(monkeypatch, popen, ssh_g):
+    fake = make_fake_asyncssh(fail_connect=True)
+    t = tr.AsyncSSHTransport(host(), SSH, asyncssh_module=fake)
+    assert t.run(["true"]).rc == 0 and len(popen.calls) == 1       # the ssh program ran it
+    assert t.note == "Uses the ssh program, as the asyncssh login failed"
+    fake.fail_connect = False                                      # the login works later
+    assert t.run(["true"]).stdout == "out" and len(popen.calls) == 1
+    assert t.note == "Uses asyncssh"
+
+
+def test_asyncssh_timeout_and_exit_codes(monkeypatch, ssh_g):
     holder = {}
 
     def run(command, stdin):
@@ -862,15 +1051,24 @@ FAKE_ENV = {
 }
 
 
-def test_child_env_drops_secrets_and_keeps_what_ssh_needs():
+@pytest.mark.parametrize("windows", [True, False], ids=["windows", "posix"])
+def test_child_env_drops_secrets_and_keeps_what_ssh_needs(monkeypatch, windows):
+    monkeypatch.setattr(tr, "_is_windows", lambda: windows)
     out = tr.child_env(FAKE_ENV)
     for name in ("CC_AGENT_API_KEY", "OPENAI_API_KEY", "LLAMA_SWAP_API_KEY", "HF_TOKEN",
                  "GITHUB_TOKEN", "GH_PAT", "AWS_SECRET_ACCESS_KEY", "DB_PASSWORD",
                  "openai_api_key"):
         assert name not in out, name
-    for name in ("SSH_AUTH_SOCK", "SSH_AGENT_PID", "PATH", "HOME", "USERPROFILE", "SystemRoot",
-                 "TEMP", "PATHEXT", "OPENSSH_AGENT_PIPE"):
+    for name in ("SSH_AUTH_SOCK", "SSH_AGENT_PID", "PATH", "HOME", "USERPROFILE", "TEMP"):
         assert out[name] == FAKE_ENV[name], name
+    # Windows ignores the case of a name; elsewhere only the upper-case spelling passes.
+    if windows:
+        assert out["SystemRoot"] == FAKE_ENV["SystemRoot"]
+    else:
+        assert "SystemRoot" not in out
+        assert tr.child_env({"SYSTEMROOT": r"C:\Windows"}) == {"SYSTEMROOT": r"C:\Windows"}
+    for name in ("PATHEXT", "OPENSSH_AGENT_PIPE"):   # not on the allowlist: left out
+        assert name not in out, name
     assert "CC_AGENT_API_KEY" in FAKE_ENV          # the input mapping is not modified
 
 

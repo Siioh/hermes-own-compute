@@ -274,9 +274,10 @@ def docker_answers(path=WIN_DOCKER, *, running=True, info=None, image=True):
 
 
 def fake_platform(monkeypatch, system, *, release="11", machine="AMD64", mac="15.1"):
-    monkeypatch.setattr(platform, "system", lambda: system)
-    monkeypatch.setattr(platform, "release", lambda: release)
-    monkeypatch.setattr(platform, "machine", lambda: machine)
+    # The prober reads these without the platform module (see prober._system).
+    monkeypatch.setattr(pr, "_system", lambda: system)
+    monkeypatch.setattr(pr, "_release", lambda: release)
+    monkeypatch.setattr(pr, "_machine", lambda: machine)
     monkeypatch.setattr(platform, "mac_ver", lambda: (mac, ("", "", ""), machine))
     monkeypatch.setattr(pr.shutil, "which", lambda name: None)      # no nvidia-smi
     monkeypatch.setattr(pr, "_nvidia_smi", lambda: None)

@@ -399,6 +399,17 @@ def test_connection_ssh_success(services, prober, x1_out):
     assert services.transports.requests[0] == (host.id, False)  # auth over the raw connection
 
 
+def test_connection_test_names_the_program_that_served_the_host(services, prober, x1_out):
+    host = sample_host()
+    t = services.transports.get(host.id)
+    t.script(["true"], exec_result(stdout=""))
+    t.script_script("==os", exec_result(stdout=x1_out))
+    t.note = "Uses the ssh program, as the SSH config sets a ProxyCommand"
+    by = {s.name: s for s in prober.test_connection(host).steps}
+    assert by["auth"].detail == ("Logged in. Uses the ssh program, as the SSH config sets a "
+                                 "ProxyCommand")
+
+
 def test_connection_slurm_success(services, prober, slurm_out):
     host = sample_slurm_host()
     t = services.transports.get(host.id)

@@ -34,10 +34,10 @@ Every host address, user, container name and job id is checked against ``SAFE_TO
 
 ``prefer="copy"`` never launches; ``"wt"``/``"cmd"``/``"macos"``/``"linux"`` pick that
 family when the platform matches and behave like ``"auto"`` otherwise. Processes are
-started from argv lists without a shell, with the filtered :func:`~.transport.child_env`
-environment. The window stays open with "Press Enter to close" when the session ends
-with an error (a small wrapper script on Windows and macOS, ``sh -c`` positional
-arguments on Linux), so the error can be read.
+started from argv lists without a shell, with the allowlisted terminal environment of
+:func:`~.transport.child_env` (``terminal=True``). The window stays open with "Press Enter
+to close" when the session ends with an error (a small wrapper script on Windows and macOS,
+``sh -c`` positional arguments on Linux), so the error can be read.
 
 NOTE: the macOS and Linux launchers cannot be run on the Windows development computer. They are
 covered by unit tests that monkeypatch ``sys.platform`` and ``shutil.which`` and check the
@@ -408,9 +408,8 @@ def _posix_script(argv: Sequence[str], title: str) -> str:
 
 def _spawn(popen: Callable[..., Any], full: Any, *, windows: bool,
            extra_env: dict[str, str] | None = None) -> None:
-    env = child_env()
-    if extra_env:
-        env.update(extra_env)                 # the desktop session found for this launch only
+    # The desktop session found for this launch only, limited to the terminal allowlist.
+    env = child_env(terminal=True, extra=extra_env)
     kwargs: dict[str, Any] = dict(stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                   stderr=subprocess.DEVNULL, close_fds=True, shell=False,
                                   env=env)
@@ -533,10 +532,13 @@ def _owned(path: str, uid: int, kind: str, lstat: Callable[[str], Any]) -> bool:
 
 def _systemd_user_env(runtime: str | None, runner: Callable[..., Any]) -> dict[str, str]:
     """Variables printed by ``systemctl --user show-environment`` (empty when unavailable)."""
-    env = child_env()
+    extra: dict[str, str] = {}
     if runtime:
-        env["XDG_RUNTIME_DIR"] = runtime
-        env.setdefault("DBUS_SESSION_BUS_ADDRESS", f"unix:path={runtime}/bus")
+        extra["XDG_RUNTIME_DIR"] = runtime
+        if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+            extra["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={runtime}/bus"
+    # The terminal list: systemctl --user reaches the desktop session, as a terminal window does.
+    env = child_env(terminal=True, extra=extra)
     try:
         res = runner(["systemctl", "--user", "show-environment"], capture_output=True, text=True,
                      timeout=5, env=env, stdin=subprocess.DEVNULL)
@@ -764,3 +766,34 @@ def launch(argv: Sequence[str], title: str, *, prefer: str = "auto",
         return _launch_linux(argv, title, command, which, popen, env, discover)
     return _result(command, error=f"opening a terminal window is not supported on {platform}; "
                                   "copy the command instead")
+
+
+def open_url(url: str, *, which: Callable[[str], str | None] = shutil.which,
+             popen: Callable[..., Any] = subprocess.Popen,
+             platform: str | None = None) -> bool:
+    """Open an ``http(s)`` ``url`` in the default browser; ``False`` if nothing was started.
+
+    The opener (``rundll32 url.dll,FileProtocolHandler`` on Windows, ``open`` on macOS,
+    ``xdg-open`` elsewhere) starts from an argv list with the terminal environment of
+    :func:`~.transport.child_env`, like a terminal window, so the browser gets no other
+    variable of this process.
+    """
+    if not isinstance(url, str) or not url.startswith(("http://", "https://")) \
+            or any(c.isspace() or c == '"' for c in url):
+        return False
+    if platform is None:
+        platform = sys.platform
+    windows = platform.startswith("win")
+    if windows:
+        root = os.environ.get("SystemRoot") or r"C:\Windows"
+        full = [os.path.join(root, "System32", "rundll32.exe"), "url.dll,FileProtocolHandler", url]
+    elif platform == "darwin":
+        full = [which("open") or "/usr/bin/open", url]
+    else:
+        opener = which("xdg-open")
+        if not opener:
+            return False
+        full = [opener, url]
+    # The terminal list: the browser opens a window in the desktop session, as a terminal does.
+    _spawn(popen, full, windows=windows)
+    return True

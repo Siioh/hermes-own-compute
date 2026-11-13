@@ -16,6 +16,7 @@ import platform
 import re
 import shutil
 import socket
+import sys
 import threading
 import time
 import uuid
@@ -939,8 +940,12 @@ class Prober:
             steps.append(TestStep("auth", False, error or "Authentication failed", hint, auth_ms))
             skipped("runtime", "scheduler", "display", "gpu")
             return finish(status)
-        steps.append(TestStep("auth", True, "Local shell" if is_local else "Logged in", None,
-                              auth_ms))
+        # The asyncssh transport says which program served the host (asyncssh or ssh).
+        note = getattr(raw, "note", "")
+        detail = "Local shell" if is_local else "Logged in"
+        steps.append(TestStep("auth", True,
+                              f"{detail}. {note}" if isinstance(note, str) and note else detail,
+                              None, auth_ms))
 
         # probe script (through the exec prefix for Slurm hosts)
         t0 = time.perf_counter()
@@ -1110,18 +1115,59 @@ def _has_native_probe(transport: Any) -> bool:
     return callable(getattr(transport, "runtime_binary", None))
 
 
+# This computer's OS name, release and machine are read here without ``platform.system()``,
+# ``platform.release()``, ``platform.machine()`` or ``platform.uname()``: on Windows those
+# start ``cmd /c ver`` (Python 3.11 and older, and newer ones when WMI does not answer), and
+# that child would get the gateway's full environment. ``platform.mac_ver()`` and
+# ``platform.freedesktop_os_release()`` only read files and are still used.
+
+#: Windows client releases by (major, minor, first build), newest first, named as
+#: ``platform.release()`` names them.
+_WINDOWS_RELEASES = (((10, 0, 22000), "11"), ((10, 0, 0), "10"), ((6, 3, 0), "8.1"),
+                     ((6, 2, 0), "8"), ((6, 1, 0), "7"))
+
+
+def _system() -> str:
+    """``Windows``, ``Darwin``, ``Linux`` or another kernel name, without starting a process."""
+    if os.name == "nt":
+        return "Windows"
+    return os.uname().sysname
+
+
+def _release() -> str:
+    """The OS release (``11`` on Windows 11, the kernel release elsewhere), process-free."""
+    if os.name != "nt":
+        return os.uname().release
+    ver = sys.getwindowsversion()
+    major, minor, build = ver.platform_version         # the real version, not a shim's
+    if getattr(ver, "product_type", 1) == 1:           # a client release, not a server
+        found = next((name for start, name in _WINDOWS_RELEASES
+                      if (major, minor, build) >= start), None)
+        if found:
+            return found
+    return f"{major}.{minor}.{build}"
+
+
+def _machine() -> str:
+    """The processor architecture as the OS names it (``AMD64``, ``ARM64``, ``x86_64``)."""
+    if os.name == "nt":
+        return (os.environ.get("PROCESSOR_ARCHITEW6432")
+                or os.environ.get("PROCESSOR_ARCHITECTURE") or "")
+    return os.uname().machine
+
+
 def _arch(machine: str) -> str:
     low = (machine or "").lower()
-    return {"amd64": "x86_64", "x64": "x86_64", "arm64": "arm64" if platform.system() != "Linux"
+    return {"amd64": "x86_64", "x64": "x86_64", "arm64": "arm64" if _system() != "Linux"
             else "aarch64"}.get(low, machine or "unknown")
 
 
 def _os_facts() -> tuple[str, str, str]:
     """``(short name, pretty name, architecture)`` of this computer, from Python alone."""
-    system = platform.system() or "Unknown"
-    arch = _arch(platform.machine())
+    system = _system() or "Unknown"
+    arch = _arch(_machine())
     if system == "Windows":
-        return "Windows", f"Windows {platform.release()}".strip(), arch
+        return "Windows", f"Windows {_release()}".strip(), arch
     if system == "Darwin":
         version = (platform.mac_ver()[0] or "").strip()
         return "macOS", f"macOS {version}".strip(), arch
@@ -1131,8 +1177,8 @@ def _os_facts() -> tuple[str, str, str]:
             pretty = str(platform.freedesktop_os_release().get("PRETTY_NAME") or "")
         except (OSError, AttributeError):
             pass
-        return "Linux", pretty or f"Linux {platform.release()}".strip(), arch
-    return system, f"{system} {platform.release()}".strip(), arch
+        return "Linux", pretty or f"Linux {_release()}".strip(), arch
+    return system, f"{system} {_release()}".strip(), arch
 
 
 def _loadavg() -> float | None:
@@ -1194,7 +1240,7 @@ def _engine_facts(transport: Any, name: str, path: str) -> LocalEngine:
         engine.rootless = bool(security.get("rootless"))
         engine.cpus = _positive_int(host.get("cpus"))
         engine.mem_bytes = _positive_int(host.get("memTotal"))
-        engine.vm = platform.system() != "Linux"
+        engine.vm = _system() != "Linux"
         if not engine.version:
             version = data.get("version") if isinstance(data.get("version"), dict) else {}
             engine.version = str(version.get("Version") or "")
@@ -1205,7 +1251,7 @@ def _nvidia_smi() -> str | None:
     found = shutil.which("nvidia-smi")
     if found:
         return found
-    if platform.system() == "Windows":
+    if _system() == "Windows":
         for base in (os.environ.get("ProgramFiles"), os.environ.get("SystemRoot")):
             if base:
                 for rel in (("NVIDIA Corporation", "NVSMI"), ("System32",)):
@@ -1242,7 +1288,7 @@ def native_probe(transport: Any, runtime_pref: str = "auto") -> NativeProbe:
     cpus = best.cpus if best and best.cpus else os.cpu_count()
     if cpus:
         lines.append(f"nproc={cpus}")
-    load = _loadavg() if platform.system() == "Linux" and not (best and best.vm) else None
+    load = _loadavg() if _system() == "Linux" and not (best and best.vm) else None
     if load is not None:
         lines.append(f"load={load:.2f}")
     lines.append("==mem")
@@ -1287,7 +1333,7 @@ def _engine_down_message(engine: LocalEngine) -> str:
     if "permission denied" in engine.problem.lower():
         return (f"{label} is installed but this account may not use it (permission denied). "
                 f"Give this account access to {label}, then test again.")
-    system = platform.system()
+    system = _system()
     if engine.name == "docker":
         start = "Start Docker Desktop" if system in ("Windows", "Darwin") else \
             "Start the Docker service"

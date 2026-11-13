@@ -1900,8 +1900,10 @@ def _ssh_keygen(path: Path, comment: str) -> None:
     if exe is None:
         raise ApiError(503, "unavailable", "ssh-keygen was not found. Install the OpenSSH client, "
                        "then test the host again.")
+    from .transport import child_env
     res = subprocess.run([exe, "-q", "-t", "ed25519", "-N", "", "-C", comment, "-f", str(path)],
-                         capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+                         capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL,
+                         env=child_env())
     if res.returncode != 0 or not path.is_file():
         raise ApiError(502, "internal", "ssh-keygen failed: " + _short(res.stderr, 200))
 

@@ -19,7 +19,7 @@ A host is a machine that work can run on. The Hosts tab lists them with a status
 An SSH host is a Linux machine reachable with `ssh`: a spare laptop, a workstation, a homelab box or a cloud machine the user owns. Work runs in containers on it.
 
 - **Endpoint.** An alias from the SSH configuration, or host, user and port. A jump host (`ssh -J`) is optional.
-- **Login.** A key loaded in the SSH agent, or the path of a key file. When a key file is set, only that key is offered. Passwords and second-factor prompts are not used automatically; the host shows **Needs login** until `ssh` works without a prompt. The plugin's own SSH commands use `BatchMode`, so a prompt fails fast instead of hanging; terminal windows are interactive.
+- **Login.** A key loaded in the SSH agent, or the path of a key file. When a key file is set, the ssh program offers only that key. With the setting `use_asyncssh` on, Windows may also offer the keys of the SSH agent. Passwords and second-factor prompts are not used automatically; the host shows **Needs login** until `ssh` works without a prompt. The plugin's own SSH commands use `BatchMode`, so a prompt fails fast instead of hanging; terminal windows are interactive.
 - **Host keys.** The first connection to a new host adds its key to the SSH known-hosts file. A key that later changes is refused, and the host shows **Needs login** with the text "connect once with ssh in a terminal to accept the host key".
 - **Remote side.** Podman (rootless works, no root access needed) or Docker. The runtime is detected on its own.
 - **Limits.** Per host: maximum environments, CPU and memory caps, and whether cloud agents are allowed. They apply to environments the plugin starts.

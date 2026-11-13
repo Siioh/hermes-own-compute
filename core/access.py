@@ -34,7 +34,6 @@ import json
 import logging
 import threading
 import time
-import webbrowser
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -137,7 +136,7 @@ class AccessManager:
         self.screen_waits = screen_waits or (SCREEN_WAIT_FRESH_S, SCREEN_WAIT_SHORT_S)
         self.tunnels = tunnels if tunnels is not None else TunnelManager(services)
         self._launcher = launcher or terminal.launch
-        self._opener = opener or webbrowser.open
+        self._opener = opener or terminal.open_url
         self._clock = clock
         self._now = now or (lambda: _dt.datetime.now(_dt.timezone.utc))
         self._terminal_lock = threading.Lock()
